@@ -543,6 +543,30 @@
       color: #fff;
     }
 
+    .whatsapp-float {
+      position: fixed;
+      right: 20px;
+      bottom: 20px;
+      width: 60px;
+      height: 60px;
+      background: #25D366;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 30px;
+      text-decoration: none;
+      box-shadow: 0 6px 20px rgba(37,211,102,0.5);
+      z-index: 1000;
+      animation: whatsapp-pulse 2.4s infinite;
+    }
+
+    @keyframes whatsapp-pulse {
+      0% { box-shadow: 0 6px 20px rgba(37,211,102,0.5), 0 0 0 0 rgba(37,211,102,0.5); }
+      70% { box-shadow: 0 6px 20px rgba(37,211,102,0.5), 0 0 0 14px rgba(37,211,102,0); }
+      100% { box-shadow: 0 6px 20px rgba(37,211,102,0.5), 0 0 0 0 rgba(37,211,102,0); }
+    }
+
     @media (max-width: 480px) {
       .hero {
         padding: 40px 16px 10px;
@@ -735,6 +759,11 @@
       </div>
     </section>
   </div>
+
+  <!-- BOTÃO FLUTUANTE WHATSAPP -->
+  <a href="https://wa.me/5592982694225?text=Oi!%20Vi%20a%20oferta%20do%20Kit%203%20Polar%20Ice%20por%20R%24%2069%2C90%20e%20queria%20saber%20mais" class="whatsapp-float" target="_blank" rel="noopener" aria-label="Fale conosco no WhatsApp">
+    💬
+  </a>
 
   <!-- RODAPÉ -->
   <footer>

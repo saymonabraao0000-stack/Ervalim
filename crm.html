@@ -294,6 +294,9 @@ tbody tr:last-child td{border-bottom:0}
     <a href="#" data-v="produtos">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 11h-3.5a1.5 1.5 0 0 1 0-3H16"/></svg>
       Produtos</a>
+    <a href="#" data-v="precos">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+      Preços</a>
   </nav>
   <div class="side-foot">
     <b>Melkatéis · Polar Ice</b><br>Distribuição bairro a bairro em Manaus. Os dados que você registra ficam salvos automaticamente.
@@ -306,6 +309,7 @@ tbody tr:last-child td{border-bottom:0}
   <a href="#" data-v="clientes">Clientes</a>
   <a href="#" data-v="cobertura">Cobertura</a>
   <a href="#" data-v="produtos">Produtos</a>
+  <a href="#" data-v="precos">Preços</a>
 </nav>
 
 <div class="main">
@@ -414,7 +418,17 @@ tbody tr:last-child td{border-bottom:0}
       <h2 style="font-size:20px;font-weight:700">Catálogo de Produtos</h2>
       <button style="background:#3AA76B;color:#fff;border:none;padding:10px 18px;border-radius:8px;cursor:pointer;font-weight:600" onclick="openProductForm()">+ Novo Produto</button>
     </div>
+    <input type="text" id="product-search" placeholder="Buscar produto..." style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;margin-bottom:20px;font-size:14px">
     <div id="products-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;margin-top:20px"></div>
+  </section>
+
+  <!-- PREÇOS -->
+  <section class="view hide" id="view-precos">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+      <h2 style="font-size:20px;font-weight:700">Tabelas de Preços</h2>
+      <button style="background:#3AA76B;color:#fff;border:none;padding:10px 18px;border-radius:8px;cursor:pointer;font-weight:600" onclick="openPriceTable()">+ Nova Tabela</button>
+    </div>
+    <div id="prices-list" style="display:grid;gap:20px"></div>
   </section>
 </div>
 
@@ -502,6 +516,32 @@ tbody tr:last-child td{border-bottom:0}
   </div>
 </div>
 
+<!-- MODAL DETALHES PRODUTO -->
+<div id="product-detail-modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:1000;overflow-y:auto">
+  <div style="background:#fff;margin:40px auto;border-radius:12px;padding:40px;width:90%;max-width:700px">
+    <button onclick="closeProductDetail()" style="float:right;background:none;border:none;font-size:28px;cursor:pointer">×</button>
+    <div id="product-detail-content"></div>
+  </div>
+</div>
+
+<!-- MODAL TABELA PREÇOS -->
+<div id="price-table-modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:12px;padding:28px;width:90%;max-width:600px;max-height:90vh;overflow-y:auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+      <h3 style="font-size:18px;font-weight:700">Tabela de Preços</h3>
+      <button onclick="closePriceTable()" style="background:none;border:none;font-size:24px;cursor:pointer">×</button>
+    </div>
+    <form id="price-form" onsubmit="handlePriceSave(event)" style="display:grid;gap:14px">
+      <div><label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px">Nome</label><input type="text" id="pt-name" placeholder="Ex: Tabela 1" required style="width:100%;padding:10px;border:1px solid #ddd;border-radius:6px"></div>
+      <div><label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px">Desconto (%)</label><input type="number" id="pt-discount" placeholder="30" min="0" max="100" required style="width:100%;padding:10px;border:1px solid #ddd;border-radius:6px"></div>
+      <div style="display:flex;gap:10px;margin-top:10px">
+        <button type="submit" style="flex:1;background:#3AA76B;color:#fff;border:none;padding:10px;border-radius:6px;font-weight:600;cursor:pointer">Salvar</button>
+        <button type="button" onclick="closePriceTable()" style="flex:1;background:#eee;border:none;padding:10px;border-radius:6px;font-weight:600;cursor:pointer">Cancelar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <div class="toast" id="toast"><span class="bd"></span><span id="toast-t">Salvo</span></div>
 
 <script>
@@ -583,17 +623,19 @@ function saveProducts(){
 }
 
 function renderProducts(){
+  const search = $('#product-search').value.toLowerCase();
+  const filtered = products.filter(p => p.name.toLowerCase().includes(search) || p.description.toLowerCase().includes(search));
   const grid = $('#products-grid');
-  grid.innerHTML = products.map(p=>`
-    <div style="border:1px solid #ddd;border-radius:8px;overflow:hidden;background:#fff">
+  grid.innerHTML = filtered.map(p=>`
+    <div style="border:1px solid #ddd;border-radius:8px;overflow:hidden;background:#fff;cursor:pointer;transition:all 0.2s" onmouseover="this.style.boxShadow='0 4px 12px rgba(0,0,0,0.1)'" onmouseout="this.style.boxShadow='none'" onclick="showProductDetail('${p.id}')">
       ${p.image ? `<img src="${p.image}" style="width:100%;height:150px;object-fit:cover">` : '<div style="width:100%;height:150px;background:#f0f0f0;display:flex;align-items:center;justify-content:center;color:#999">Sem foto</div>'}
       <div style="padding:12px">
         <h4 style="font-size:14px;font-weight:600;margin-bottom:4px">${p.name}</h4>
         <p style="font-size:12px;color:#666;margin-bottom:8px">${p.description}</p>
         <div style="font-size:16px;font-weight:700;color:#3AA76B;margin-bottom:8px">R$ ${p.price.toFixed(2)}</div>
         <div style="display:flex;gap:6px">
-          <button onclick="editProduct('${p.id}')" style="flex:1;padding:6px;background:#3AA76B;color:#fff;border:none;border-radius:4px;font-size:12px;cursor:pointer;font-weight:600">Editar</button>
-          <button onclick="deleteProduct('${p.id}')" style="flex:1;padding:6px;background:#ddd;border:none;border-radius:4px;font-size:12px;cursor:pointer;font-weight:600">Deletar</button>
+          <button onclick="event.stopPropagation(); editProduct('${p.id}')" style="flex:1;padding:6px;background:#3AA76B;color:#fff;border:none;border-radius:4px;font-size:12px;cursor:pointer;font-weight:600">Editar</button>
+          <button onclick="event.stopPropagation(); deleteProduct('${p.id}')" style="flex:1;padding:6px;background:#ddd;border:none;border-radius:4px;font-size:12px;cursor:pointer;font-weight:600">Deletar</button>
         </div>
       </div>
     </div>
@@ -662,6 +704,126 @@ function deleteProduct(id){
     saveProducts();
     renderProducts();
     showToast('Produto removido');
+  }
+}
+
+/* ---------- DETALHES PRODUTO ---------- */
+function showProductDetail(id){
+  const p = products.find(pr => pr.id === id);
+  if(!p) return;
+  const content = $('#product-detail-content');
+  const currentTable = localStorage.getItem('amazonervas-selected-price-table') || '1';
+  let priceDisplay = p.price;
+  if(currentTable !== 'base'){
+    const tables = loadPriceTables();
+    const table = tables.find(t => t.id === parseInt(currentTable));
+    if(table){
+      const discount = table.discount / 100;
+      priceDisplay = (p.price * (1 - discount)).toFixed(2);
+    }
+  }
+  content.innerHTML = `
+    <h2 style="font-size:24px;font-weight:700;margin-bottom:20px">${p.name}</h2>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:30px">
+      <div>
+        ${p.image ? `<img src="${p.image}" style="width:100%;border-radius:8px;object-fit:cover;height:300px">` : '<div style="width:100%;height:300px;background:#f0f0f0;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#999">Sem foto</div>'}
+      </div>
+      <div>
+        <p style="font-size:14px;color:#666;margin-bottom:20px;line-height:1.6">${p.description}</p>
+        <div style="background:#f5f5f5;padding:20px;border-radius:8px;margin-bottom:20px">
+          <div style="font-size:12px;color:#666;margin-bottom:8px">Preço:</div>
+          <div style="font-size:32px;font-weight:700;color:#3AA76B">R$ ${priceDisplay}</div>
+          ${p.characteristics ? `<div style="margin-top:20px;font-size:13px"><strong>Características:</strong><div style="margin-top:8px">${p.characteristics.map(c=>`<span style="display:inline-block;background:#e0e0e0;padding:4px 12px;border-radius:4px;margin-right:6px;margin-bottom:6px">${c}</span>`).join('')}</div></div>` : ''}
+        </div>
+      </div>
+    </div>
+    <div style="text-align:center">
+      <a href="https://ervalim.lojavirtualnuvem.com.br/checkout/v3/start/2015069386/4ba0f8c897a3e4d76f1d9650a39c262201a7c8bc" target="_blank" style="display:inline-block;background:#3AA76B;color:#fff;padding:14px 40px;border-radius:8px;text-decoration:none;font-weight:600;cursor:pointer">Comprar Agora</a>
+    </div>
+  `;
+  $('#product-detail-modal').style.display = 'block';
+}
+
+function closeProductDetail(){
+  $('#product-detail-modal').style.display = 'none';
+}
+
+/* ---------- PREÇOS ---------- */
+const PRICE_TABLES_SEED = [
+  {id:1,name:'Tabela 1',discount:30},
+  {id:2,name:'Tabela 2',discount:27}
+];
+let priceTables = [];
+
+function loadPriceTables(){
+  const stored = localStorage.getItem('amazonervas-price-tables');
+  priceTables = stored ? JSON.parse(stored) : PRICE_TABLES_SEED.slice();
+  return priceTables;
+}
+
+function savePriceTables(){
+  localStorage.setItem('amazonervas-price-tables', JSON.stringify(priceTables));
+}
+
+function renderPrices(){
+  loadPriceTables();
+  const container = $('#prices-list');
+  container.innerHTML = priceTables.map(t=>`
+    <div style="background:#fff;border:1px solid #ddd;border-radius:8px;padding:20px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <div>
+          <h3 style="font-size:18px;font-weight:700;margin-bottom:4px">${t.name}</h3>
+          <p style="font-size:14px;color:#666">Desconto: ${t.discount}%</p>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button onclick="openPriceTable('${t.id}')" style="padding:8px 16px;background:#3AA76B;color:#fff;border:none;border-radius:4px;cursor:pointer;font-weight:600;font-size:12px">Editar</button>
+          <button onclick="deletePriceTable('${t.id}')" style="padding:8px 16px;background:#d32f2f;color:#fff;border:none;border-radius:4px;cursor:pointer;font-weight:600;font-size:12px">Deletar</button>
+        </div>
+      </div>
+      <div style="background:#f5f5f5;padding:12px;border-radius:4px;margin-bottom:12px">
+        <div style="font-size:12px;color:#666;margin-bottom:8px">Preço com desconto (Exemplo: R$ 100):</div>
+        <div style="font-size:20px;font-weight:700;color:#3AA76B">R$ ${(100 * (1 - t.discount/100)).toFixed(2)}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function openPriceTable(id=null){
+  if(id){
+    const t = priceTables.find(p => p.id === parseInt(id));
+    if(t){
+      $('#pt-name').value = t.name;
+      $('#pt-discount').value = t.discount;
+    }
+  } else {
+    $('#price-form').reset();
+  }
+  $('#price-table-modal').style.display = 'flex';
+}
+
+function closePriceTable(){
+  $('#price-table-modal').style.display = 'none';
+}
+
+function handlePriceSave(e){
+  e.preventDefault();
+  const name = $('#pt-name').value.trim();
+  const discount = parseInt($('#pt-discount').value);
+  if(!name || discount < 0 || discount > 100) return;
+  const newTable = {id:Date.now(),name,discount};
+  priceTables.push(newTable);
+  savePriceTables();
+  renderPrices();
+  closePriceTable();
+  showToast('Tabela salva');
+}
+
+function deletePriceTable(id){
+  if(confirm('Deletar esta tabela de preços?')){
+    priceTables = priceTables.filter(p => p.id !== parseInt(id));
+    savePriceTables();
+    renderPrices();
+    showToast('Tabela removida');
   }
 }
 
@@ -823,13 +985,14 @@ function toast(msg){ const t=$('#toast'); $('#toast-t').textContent=msg; t.class
 const VIEWS={dash:{eye:'Visão geral',t:'Dashboard comercial',s:'Panorama da cobertura de drogarias e das próximas ações de campo.'},
   clientes:{eye:'Carteira',t:'Clientes',s:'Todas as drogarias mapeadas. Toque numa linha para registrar visita, situação e valores.'},
   cobertura:{eye:'Território',t:'Cobertura por bairro',s:'Onde a Amazon Ervas já está forte e onde há espaço para crescer em Manaus.'},
-  produtos:{eye:'Catálogo',t:'Produtos',s:'Gerencie o catálogo de produtos Amazon Ervas com preços, fotos e descrições.'}};
+  produtos:{eye:'Catálogo',t:'Produtos',s:'Gerencie o catálogo de produtos Amazon Ervas com preços, fotos e descrições.'},
+  precos:{eye:'Tabelas',t:'Preços',s:'Defina diferentes tabelas de preços com descontos variáveis para cada produto.'}};
 function go(v){
   $$('.view').forEach(el=>el.classList.add('hide'));
   $('#view-'+v).classList.remove('hide');
   $$('#nav a, #mnav a').forEach(a=>a.classList.toggle('on',a.dataset.v===v));
   const info=VIEWS[v]; $('#tb-eye').textContent=info.eye; $('#tb-title').textContent=info.t; $('#tb-sub').textContent=info.s;
-  if(v==='dash')renderDash(); if(v==='clientes')renderClientes(); if(v==='cobertura')renderCobertura(); if(v==='produtos')renderProducts();
+  if(v==='dash')renderDash(); if(v==='clientes')renderClientes(); if(v==='cobertura')renderCobertura(); if(v==='produtos')renderProducts(); if(v==='precos')renderPrices();
   window.scrollTo(0,0);
 }
 
@@ -925,9 +1088,10 @@ function deletePharmacy(id){
 }
 
 async function init(){
-  await loadOverrides(); merge(); loadProducts(); const ph=loadPharmacies(); PHARMACIES_SEED.length=0; PHARMACIES_SEED.push(...ph); initBairroFilter();
+  await loadOverrides(); merge(); loadProducts(); loadPriceTables(); const ph=loadPharmacies(); PHARMACIES_SEED.length=0; PHARMACIES_SEED.push(...ph); initBairroFilter();
   $$('#nav a, #mnav a').forEach(a=>a.onclick=e=>{e.preventDefault();go(a.dataset.v);});
   $('#q').oninput=renderClientes; $('#f-bairro').onchange=renderClientes; $('#f-sit').onchange=renderClientes;
+  if($('#product-search')) $('#product-search').oninput=renderProducts;
   $('#dr-close').onclick=closeDrawer; $('#dr-cancel').onclick=closeDrawer; $('#scrim').onclick=closeDrawer; $('#dr-save').onclick=saveDrawer;
   $$('#sit-pick .sit-opt').forEach(b=>b.onclick=()=>setSit(b.dataset.v));
   document.addEventListener('keydown',e=>{ if(e.key==='Escape')closeDrawer(); });

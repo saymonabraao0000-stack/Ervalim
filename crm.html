@@ -374,6 +374,7 @@ tbody tr:last-child td{border-bottom:0}
         <option value="nunca">Nunca visitado</option>
       </select>
       <span class="count-pill"><b id="c-count">0</b> drogarias</span>
+      <button style="background:#3AA76B;color:#fff;border:none;padding:10px 18px;border-radius:8px;cursor:pointer;font-weight:600;margin-left:auto" onclick="openPharmacyForm()">+ Nova Farmácia</button>
     </div>
     <div class="tbl-wrap">
       <table>
@@ -457,6 +458,27 @@ tbody tr:last-child td{border-bottom:0}
     <button class="btn btn-ghost" id="dr-cancel">Cancelar</button>
   </div>
 </aside>
+
+<!-- MODAL FARMÁCIA -->
+<div id="pharmacy-modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:12px;padding:28px;width:90%;max-width:500px;max-height:90vh;overflow-y:auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+      <h3 id="phm-title" style="font-size:18px;font-weight:700">Nova Farmácia</h3>
+      <button onclick="closePharmacyModal()" style="background:none;border:none;font-size:24px;cursor:pointer">×</button>
+    </div>
+    <form id="pharmacy-form" onsubmit="handlePharmacySubmit(event)" style="display:grid;gap:14px">
+      <div><label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px">Nome</label><input type="text" id="phf-nome" placeholder="Ex: Drogaria A" required style="width:100%;padding:10px;border:1px solid #ddd;border-radius:6px"></div>
+      <div><label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px">Bairro</label><input type="text" id="phf-bairro" placeholder="Ex: Centro" required style="width:100%;padding:10px;border:1px solid #ddd;border-radius:6px"></div>
+      <div><label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px">Endereço</label><input type="text" id="phf-endereco" placeholder="Av. Principal, 123" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:6px"></div>
+      <div><label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px">Telefone</label><input type="tel" id="phf-telefone" placeholder="(92) 98765-4321" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:6px"></div>
+      <div><label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px">Horário</label><input type="text" id="phf-horario" placeholder="7h-22h" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:6px"></div>
+      <div style="display:flex;gap:10px;margin-top:10px">
+        <button type="submit" style="flex:1;background:#3AA76B;color:#fff;border:none;padding:10px;border-radius:6px;font-weight:600;cursor:pointer">Salvar</button>
+        <button type="button" onclick="closePharmacyModal()" style="flex:1;background:#eee;border:none;padding:10px;border-radius:6px;font-weight:600;cursor:pointer">Cancelar</button>
+      </div>
+    </form>
+  </div>
+</div>
 
 <!-- MODAL PRODUTOS -->
 <div id="product-modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center">
@@ -761,8 +783,9 @@ function renderClientes(){
       <td>${c.rating!=null?`<span class="star">★ ${c.rating.toFixed(1)}</span>`:'<span class="tel">—</span>'}</td>
       <td><span class="badge ${s.c}"><span class="bd"></span>${s.t}</span></td>
       <td class="tnum">${d?d.full:'<span class="tel">—</span>'}</td>
+      <td style="display:flex;gap:6px;justify-content:center"><button onclick="openPharmacyForm(${c.id})" style="background:#3AA76B;color:#fff;border:none;padding:4px 12px;border-radius:4px;cursor:pointer;font-size:12px;font-weight:600">✏️ Editar</button><button onclick="deletePharmacy(${c.id})" style="background:#d32f2f;color:#fff;border:none;padding:4px 12px;border-radius:4px;cursor:pointer;font-size:12px;font-weight:600">🗑️ Deletar</button></td>
     </tr>`;
-  }).join('') || `<tr><td colspan="6"><div class="empty">Nenhuma drogaria encontrada com esses filtros.</div></td></tr>`;
+  }).join('') || `<tr><td colspan="7"><div class="empty">Nenhuma drogaria encontrada com esses filtros.</div></td></tr>`;
   $$('#cli-body tr[data-id]').forEach(tr=>tr.onclick=()=>openDrawer(+tr.dataset.id));
 }
 
@@ -828,8 +851,81 @@ if('serviceWorker' in navigator){
   });
 }
 
+/* ---------- FARMÁCIAS ---------- */
+let editingPharmacyId=null;
+const PHARMACIES_SEED=[
+  {id:1,nome:'Drogaria Central',bairro:'Centro',endereco:'Av. Getúlio Vargas, 123',telefone:'(92) 3201-1234',horario:'7h-22h'},
+  {id:2,nome:'Farmácia Vitória',bairro:'Aleixo',endereco:'Rua 1º de Maio, 456',telefone:'(92) 3202-5678',horario:'7h-21h'},
+];
+function loadPharmacies(){
+  const stored=localStorage.getItem('amazonervas-pharmacies');
+  if(!stored) return PHARMACIES_SEED;
+  return JSON.parse(stored);
+}
+function savePharmacies(pharmacies){
+  localStorage.setItem('amazonervas-pharmacies', JSON.stringify(pharmacies));
+}
+function openPharmacyForm(id=null){
+  editingPharmacyId=id;
+  const fm=$('#pharmacy-form');
+  if(id===null){
+    $('#phm-title').textContent='Nova Farmácia';
+    fm.reset();
+  }else{
+    const ph=PHARMACIES_SEED.find(p=>p.id===id);
+    if(ph){
+      $('#phm-title').textContent='Editar Farmácia';
+      $('#phf-nome').value=ph.nome||'';
+      $('#phf-bairro').value=ph.bairro||'';
+      $('#phf-endereco').value=ph.endereco||'';
+      $('#phf-telefone').value=ph.telefone||'';
+      $('#phf-horario').value=ph.horario||'';
+    }
+  }
+  $('#pharmacy-modal').style.display='flex';
+}
+function closePharmacyModal(){
+  $('#pharmacy-modal').style.display='none';
+  editingPharmacyId=null;
+}
+function handlePharmacySubmit(e){
+  e.preventDefault();
+  const nome=$('#phf-nome').value.trim();
+  const bairro=$('#phf-bairro').value.trim();
+  const endereco=$('#phf-endereco').value.trim();
+  const telefone=$('#phf-telefone').value.trim();
+  const horario=$('#phf-horario').value.trim();
+  if(!nome||!bairro) return toast('Nome e bairro obrigatórios');
+  const pharmacies=loadPharmacies();
+  if(editingPharmacyId===null){
+    const newId=Math.max(...pharmacies.map(p=>p.id),0)+1;
+    pharmacies.push({id:newId,nome,bairro,endereco,telefone,horario});
+  }else{
+    const ph=pharmacies.find(p=>p.id===editingPharmacyId);
+    if(ph){
+      ph.nome=nome; ph.bairro=bairro; ph.endereco=endereco;
+      ph.telefone=telefone; ph.horario=horario;
+    }
+  }
+  savePharmacies(pharmacies);
+  PHARMACIES_SEED.length=0;
+  PHARMACIES_SEED.push(...pharmacies);
+  closePharmacyModal();
+  toast('Farmácia salva');
+  renderClientes();
+}
+function deletePharmacy(id){
+  if(!confirm('Deletar essa farmácia?')) return;
+  const pharmacies=loadPharmacies().filter(p=>p.id!==id);
+  savePharmacies(pharmacies);
+  PHARMACIES_SEED.length=0;
+  PHARMACIES_SEED.push(...pharmacies);
+  renderClientes();
+  toast('Farmácia deletada');
+}
+
 async function init(){
-  await loadOverrides(); merge(); loadProducts(); initBairroFilter();
+  await loadOverrides(); merge(); loadProducts(); const ph=loadPharmacies(); PHARMACIES_SEED.length=0; PHARMACIES_SEED.push(...ph); initBairroFilter();
   $$('#nav a, #mnav a').forEach(a=>a.onclick=e=>{e.preventDefault();go(a.dataset.v);});
   $('#q').oninput=renderClientes; $('#f-bairro').onchange=renderClientes; $('#f-sit').onchange=renderClientes;
   $('#dr-close').onclick=closeDrawer; $('#dr-cancel').onclick=closeDrawer; $('#scrim').onclick=closeDrawer; $('#dr-save').onclick=saveDrawer;

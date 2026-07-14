@@ -300,6 +300,7 @@ tbody tr:last-child td{border-bottom:0}
   </nav>
   <div class="side-foot">
     <b>Melkatéis · Polar Ice</b><br>Distribuição bairro a bairro em Manaus. Os dados que você registra ficam salvos automaticamente.
+    <div style="margin-top:12px"><a href="#" onclick="handleLogout();return false;" style="color:#C8A951;font-size:12px;text-decoration:underline">Sair</a></div>
   </div>
 </aside>
 
@@ -548,21 +549,36 @@ tbody tr:last-child td{border-bottom:0}
 // Auth & UI State
 let isAuthenticated = false;
 const CRM_PASSWORD = 'amazon';
+const AUTH_KEY = 'amazonervas-auth';
 
 function handleLogin(){
   const pwd = document.getElementById('login-pwd').value;
   const errorEl = document.getElementById('login-error');
 
   if(pwd === CRM_PASSWORD){
-    isAuthenticated = true;
-    document.getElementById('login-screen').classList.add('hidden');
-    loadOverrides();
-    init();
+    localStorage.setItem(AUTH_KEY, '1');
+    enterApp();
   } else {
     errorEl.classList.add('show');
     setTimeout(() => errorEl.classList.remove('show'), 2000);
     document.getElementById('login-pwd').value = '';
   }
+}
+
+function enterApp(){
+  isAuthenticated = true;
+  document.getElementById('login-screen').classList.add('hidden');
+  loadOverrides();
+  init();
+}
+
+function handleLogout(){
+  localStorage.removeItem(AUTH_KEY);
+  location.reload();
+}
+
+if(localStorage.getItem(AUTH_KEY) === '1'){
+  enterApp();
 }
 
 // Enter key support

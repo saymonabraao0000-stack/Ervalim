@@ -454,8 +454,18 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
+let db = null;
+let firebaseReady = false;
+
+if(typeof firebase !== 'undefined'){
+  try{
+    firebase.initializeApp(firebaseConfig);
+    db = firebase.firestore();
+    firebaseReady = true;
+  } catch(e){
+    console.warn('Firebase init failed. Using localStorage fallback:', e.message);
+  }
+}
 
 // Auth & UI State
 let isAuthenticated = false;
@@ -495,23 +505,40 @@ let overrides = {};
 let clients = [];
 let editingId = null;
 
-/* ---------- storage (Firestore) ---------- */
+/* ---------- storage (Firestore + localStorage fallback) ---------- */
+
 async function loadOverrides(){
-  try {
-    const doc = await db.collection('crm').doc('config').get();
-    overrides = doc.exists ? (doc.data().overrides || {}) : {};
-  } catch(e) {
-    console.error('loadOverrides error:', e);
-    overrides = {};
+  if(firebaseReady && db){
+    try {
+      const doc = await db.collection('crm').doc('config').get();
+      overrides = doc.exists ? (doc.data().overrides || {}) : {};
+    } catch(e) {
+      console.error('Firestore error, using localStorage:', e);
+      const stored = localStorage.getItem(KEY);
+      overrides = stored ? JSON.parse(stored) : {};
+    }
+  } else {
+    // Fallback to localStorage if Firebase unavailable
+    const stored = localStorage.getItem(KEY);
+    overrides = stored ? JSON.parse(stored) : {};
   }
 }
 
 async function saveOverrides(){
+  // Always save to localStorage
   try {
-    await db.collection('crm').doc('config').set({ overrides }, { merge: true });
+    localStorage.setItem(KEY, JSON.stringify(overrides));
   } catch(e) {
-    console.error('saveOverrides error:', e);
-    showToast('Erro ao salvar. Verifique sua conexão.');
+    console.error('localStorage error:', e);
+  }
+
+  // Also try Firestore if available
+  if(firebaseReady && db){
+    try {
+      await db.collection('crm').doc('config').set({ overrides }, { merge: true });
+    } catch(e) {
+      console.warn('Firestore save failed, but localStorage backup exists');
+    }
   }
 }
 function merge(){

@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Amazon Ervas · CRM Comercial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"></script>
+<style>
+:root{
+  --canopy:#0C231A;      /* dossel — quase preto esverdeado */
+  --forest:#12402C;      /* floresta */
+  --river:#1B5E3F;       /* rio-verde */
+  --leaf:#3AA76B;        /* folha viva (positivo) */
+  --leaf-soft:#E3F0E8;
+  --gold:#C8A951;        /* dourado (destaque) */
+  --gold-deep:#A6862F;
+  --amber:#E0A82E;       /* amarelo */
+  --clay:#C0492E;        /* vermelho controlado */
+  --paper:#F4F3EC;       /* papel */
+  --paper-2:#FBFAF5;
+  --ink:#15251D;
+  --ink-soft:#5C6B63;
+  --line:#E2E0D4;
+  --line-2:#EEEDE4;
+  --white:#FFFFFF;
+  --shadow:0 1px 2px rgba(12,35,26,.04),0 8px 24px rgba(12,35,26,.06);
+  --shadow-lg:0 12px 40px rgba(12,35,26,.14);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  font-family:'Inter',system-ui,sans-serif;
+  background:var(--paper);color:var(--ink);
+  -webkit-font-smoothing:antialiased;
+  display:flex;min-height:100vh;
+}
+h1,h2,h3,.display{font-family:'Bricolage Grotesque',sans-serif;letter-spacing:-.01em}
+button{font-family:inherit;cursor:pointer}
+.tnum{font-variant-numeric:tabular-nums}
+
+/* ---------- SIDEBAR ---------- */
+.side{
+  width:236px;flex-shrink:0;background:var(--canopy);color:#CFE0D6;
+  display:flex;flex-direction:column;position:sticky;top:0;height:100vh;
+  padding:22px 16px;
+}
+.brand{display:flex;align-items:center;gap:11px;padding:6px 8px 22px}
+.brand .mark{width:38px;height:38px;border-radius:11px;background:
+  radial-gradient(circle at 32% 30%,var(--leaf),var(--river) 70%);
+  display:grid;place-items:center;flex-shrink:0;box-shadow:inset 0 0 0 1px rgba(255,255,255,.08)}
+.brand .mark svg{width:22px;height:22px}
+.brand b{font-family:'Bricolage Grotesque';font-size:16px;color:#fff;font-weight:700;line-height:1;display:block}
+.brand span{font-size:11px;color:#7FA090;letter-spacing:.04em;text-transform:uppercase}
+.nav{display:flex;flex-direction:column;gap:3px;margin-top:6px}
+.nav a{
+  display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:10px;
+  color:#B4CabB;text-decoration:none;font-size:14px;font-weight:500;
+  transition:background .15s,color .15s;
+}
+.nav a svg{width:18px;height:18px;opacity:.85}
+.nav a:hover{background:rgba(255,255,255,.05);color:#EAF3ED}
+.nav a.on{background:linear-gradient(90deg,rgba(58,167,107,.22),rgba(58,167,107,.05));color:#fff}
+.nav a.on svg{opacity:1;color:var(--gold)}
+.side-foot{margin-top:auto;padding:14px 10px 4px;border-top:1px solid rgba(255,255,255,.07);font-size:11px;color:#6E8A7B;line-height:1.5}
+.side-foot b{color:#9FBBAC;font-weight:600}
+
+/* ---------- MAIN ---------- */
+.main{flex:1;min-width:0;display:flex;flex-direction:column}
+.topbar{
+  display:flex;align-items:baseline;justify-content:space-between;gap:16px;
+  padding:26px 34px 18px;border-bottom:1px solid var(--line);background:var(--paper-2);
+}
+.topbar .eyebrow{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold-deep);font-weight:700;margin-bottom:5px}
+.topbar h1{font-size:26px;font-weight:700;color:var(--ink)}
+.topbar .sub{font-size:13px;color:var(--ink-soft);margin-top:3px;max-width:52ch}
+.saved{font-size:12px;color:var(--ink-soft);display:flex;align-items:center;gap:6px;white-space:nowrap}
+.saved .dot{width:7px;height:7px;border-radius:50%;background:var(--leaf)}
+.view{padding:26px 34px 60px;flex:1}
+.view.hide{display:none}
+
+/* ---------- KPI ---------- */
+.kpi-grid{display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;gap:16px;margin-bottom:20px}
+.card{background:var(--white);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow)}
+.kpi{padding:20px 22px;position:relative;overflow:hidden}
+.kpi .lbl{font-size:12px;color:var(--ink-soft);font-weight:600;letter-spacing:.02em;text-transform:uppercase}
+.kpi .num{font-family:'Bricolage Grotesque';font-weight:800;font-size:38px;line-height:1;margin-top:12px;color:var(--forest)}
+.kpi .foot{font-size:12px;color:var(--ink-soft);margin-top:8px}
+.kpi.hero{grid-row:span 1;background:linear-gradient(150deg,var(--forest),var(--canopy));color:#EAF3ED;display:flex;align-items:center;gap:22px}
+.kpi.hero .lbl{color:#8FB0A0}
+.ring{width:112px;height:112px;flex-shrink:0}
+.ring text{font-family:'Bricolage Grotesque';font-weight:800}
+.hero-txt .big{font-family:'Bricolage Grotesque';font-weight:800;font-size:30px;color:#fff;line-height:1.05}
+.hero-txt .cap{font-size:13px;color:#9FC0AF;margin-top:6px;max-width:22ch}
+.kpi .chip{position:absolute;top:16px;right:18px;font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px}
+.chip.up{background:var(--leaf-soft);color:var(--river)}
+.chip.warn{background:#FBEED0;color:var(--gold-deep)}
+
+/* ---------- PANELS ---------- */
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
+.panel{padding:20px 22px}
+.panel h3{font-size:15px;font-weight:700;color:var(--ink);margin-bottom:2px}
+.panel .ph{font-size:12px;color:var(--ink-soft);margin-bottom:16px}
+.bars{display:flex;flex-direction:column;gap:12px}
+.barrow{display:flex;align-items:center;gap:12px}
+.barrow .k{width:130px;font-size:13px;color:var(--ink-soft);display:flex;align-items:center;gap:8px}
+.barrow .k .sw{width:10px;height:10px;border-radius:3px;flex-shrink:0}
+.track{flex:1;height:10px;background:var(--line-2);border-radius:6px;overflow:hidden}
+.track>span{display:block;height:100%;border-radius:6px;transition:width .7s cubic-bezier(.2,.7,.2,1)}
+.barrow .v{width:38px;text-align:right;font-size:13px;font-weight:700;color:var(--ink)}
+
+.visits{display:flex;flex-direction:column;gap:2px}
+.visit{display:flex;align-items:center;gap:13px;padding:11px 6px;border-bottom:1px solid var(--line-2)}
+.visit:last-child{border:0}
+.visit .cal{width:44px;height:46px;border-radius:10px;background:var(--leaf-soft);display:grid;place-items:center;flex-shrink:0;line-height:1}
+.visit .cal .d{font-family:'Bricolage Grotesque';font-weight:800;font-size:18px;color:var(--river)}
+.visit .cal .m{font-size:9px;text-transform:uppercase;color:var(--river);letter-spacing:.05em}
+.visit .info{min-width:0;flex:1}
+.visit .info b{font-size:13.5px;font-weight:600;color:var(--ink);display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.visit .info span{font-size:12px;color:var(--ink-soft)}
+.visit.overdue .cal{background:#F7DED6}.visit.overdue .cal .d,.visit.overdue .cal .m{color:var(--clay)}
+.empty{padding:30px 10px;text-align:center;color:var(--ink-soft);font-size:13px}
+.empty svg{width:34px;height:34px;opacity:.4;margin-bottom:8px}
+
+/* ---------- CANOPY (heatmap) ---------- */
+.canopy-wrap .panel{padding:22px}
+.canopy{display:grid;grid-template-columns:repeat(auto-fill,minmax(158px,1fr));gap:11px}
+.tile{border-radius:13px;padding:14px 15px;color:#fff;position:relative;overflow:hidden;cursor:pointer;
+  transition:transform .16s,box-shadow .16s;min-height:104px;display:flex;flex-direction:column;justify-content:space-between}
+.tile:hover{transform:translateY(-3px);box-shadow:var(--shadow-lg)}
+.tile .bn{font-family:'Bricolage Grotesque';font-weight:700;font-size:14px;line-height:1.15;z-index:1;text-shadow:0 1px 3px rgba(0,0,0,.25)}
+.tile .pct{font-family:'Bricolage Grotesque';font-weight:800;font-size:30px;line-height:1;z-index:1}
+.tile .meta{font-size:11px;opacity:.9;z-index:1}
+.tile .veil{position:absolute;inset:0;background:radial-gradient(circle at 78% 20%,rgba(255,255,255,.18),transparent 60%)}
+
+/* legend */
+.legend{display:flex;gap:18px;flex-wrap:wrap;margin-top:16px;font-size:12px;color:var(--ink-soft)}
+.legend span{display:flex;align-items:center;gap:7px}
+.legend i{width:12px;height:12px;border-radius:4px;display:inline-block}
+
+/* ---------- TABLE ---------- */
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px}
+.search{flex:1;min-width:200px;position:relative}
+.search svg{position:absolute;left:13px;top:50%;transform:translateY(-50%);width:16px;height:16px;color:var(--ink-soft)}
+.search input{width:100%;padding:11px 14px 11px 38px;border:1px solid var(--line);border-radius:10px;background:var(--white);font-size:14px;color:var(--ink)}
+.search input:focus{outline:none;border-color:var(--leaf);box-shadow:0 0 0 3px rgba(58,167,107,.15)}
+select.filter{padding:11px 34px 11px 13px;border:1px solid var(--line);border-radius:10px;background:var(--white) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%235C6B63' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat right 12px center;
+  font-size:14px;color:var(--ink);appearance:none;cursor:pointer;max-width:210px}
+select.filter:focus{outline:none;border-color:var(--leaf)}
+.count-pill{font-size:13px;color:var(--ink-soft);white-space:nowrap;font-weight:500}
+.count-pill b{color:var(--forest);font-weight:700}
+
+.tbl-wrap{background:var(--white);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);overflow:hidden}
+table{width:100%;border-collapse:collapse}
+thead th{font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-soft);font-weight:700;
+  text-align:left;padding:13px 16px;background:var(--paper-2);border-bottom:1px solid var(--line);position:sticky;top:0}
+tbody td{padding:13px 16px;border-bottom:1px solid var(--line-2);font-size:13.5px;vertical-align:middle}
+tbody tr{cursor:pointer;transition:background .12s}
+tbody tr:hover{background:#F7FAF8}
+tbody tr:last-child td{border-bottom:0}
+.cli-name{font-weight:600;color:var(--ink)}
+.cli-sub{font-size:12px;color:var(--ink-soft);margin-top:2px}
+.badge{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:4px 11px;border-radius:20px;white-space:nowrap}
+.badge .bd{width:7px;height:7px;border-radius:50%}
+.b-ativo{background:var(--leaf-soft);color:var(--river)}.b-ativo .bd{background:var(--leaf)}
+.b-inativo{background:#F7DED6;color:var(--clay)}.b-inativo .bd{background:var(--clay)}
+.b-prospeccao{background:#FBEED0;color:var(--gold-deep)}.b-prospeccao .bd{background:var(--amber)}
+.b-nunca{background:#ECEBE2;color:var(--ink-soft)}.b-nunca .bd{background:#A9B3AC}
+.star{color:var(--gold);font-weight:700;font-size:13px}
+.tel{font-size:12.5px;color:var(--ink-soft)}
+.rank-col{width:34px;text-align:center;color:var(--ink-soft);font-family:'Bricolage Grotesque';font-weight:700}
+
+/* ---------- DRAWER ---------- */
+.scrim{position:fixed;inset:0;background:rgba(12,35,26,.42);opacity:0;pointer-events:none;transition:opacity .25s;z-index:40}
+.scrim.show{opacity:1;pointer-events:auto}
+.drawer{position:fixed;top:0;right:0;height:100vh;width:440px;max-width:92vw;background:var(--paper-2);
+  box-shadow:var(--shadow-lg);transform:translateX(100%);transition:transform .3s cubic-bezier(.3,.8,.3,1);
+  z-index:50;display:flex;flex-direction:column}
+.drawer.show{transform:translateX(0)}
+.dr-head{padding:22px 24px 18px;border-bottom:1px solid var(--line);background:linear-gradient(150deg,var(--forest),var(--canopy));color:#fff;position:relative}
+.dr-head .bn{font-size:12px;color:var(--gold);font-weight:700;letter-spacing:.03em;text-transform:uppercase}
+.dr-head h2{font-size:20px;font-weight:700;margin-top:5px;line-height:1.2;color:#fff}
+.dr-head .addr{font-size:12.5px;color:#A9C6B6;margin-top:8px;line-height:1.5}
+.dr-close{position:absolute;top:18px;right:18px;width:32px;height:32px;border:0;border-radius:9px;background:rgba(255,255,255,.12);color:#fff;display:grid;place-items:center}
+.dr-close:hover{background:rgba(255,255,255,.22)}
+.dr-body{padding:22px 24px;overflow-y:auto;flex:1}
+.fld{margin-bottom:17px}
+.fld label{display:block;font-size:12px;font-weight:600;color:var(--ink);margin-bottom:7px;letter-spacing:.01em}
+.fld input,.fld select,.fld textarea{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:9px;background:var(--white);font-size:14px;color:var(--ink);font-family:inherit}
+.fld textarea{resize:vertical;min-height:66px}
+.fld input:focus,.fld select:focus,.fld textarea:focus{outline:none;border-color:var(--leaf);box-shadow:0 0 0 3px rgba(58,167,107,.15)}
+.sit-pick{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.sit-opt{padding:10px;border:1.5px solid var(--line);border-radius:10px;background:var(--white);font-size:13px;font-weight:600;color:var(--ink-soft);
+  display:flex;align-items:center;gap:8px;transition:.14s;text-align:left}
+.sit-opt .bd{width:9px;height:9px;border-radius:50%;background:#B7C0B9}
+.sit-opt.sel{border-color:currentColor}
+.sit-opt[data-v="ativo"].sel{color:var(--river);background:var(--leaf-soft)}.sit-opt[data-v="ativo"].sel .bd{background:var(--leaf)}
+.sit-opt[data-v="inativo"].sel{color:var(--clay);background:#F7DED6}.sit-opt[data-v="inativo"].sel .bd{background:var(--clay)}
+.sit-opt[data-v="prospeccao"].sel{color:var(--gold-deep);background:#FBEED0}.sit-opt[data-v="prospeccao"].sel .bd{background:var(--amber)}
+.sit-opt[data-v="nunca"].sel{color:var(--ink);background:#ECEBE2}.sit-opt[data-v="nunca"].sel .bd{background:#8A948C}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.dr-foot{padding:16px 24px;border-top:1px solid var(--line);display:flex;gap:10px;background:var(--paper-2)}
+.btn{flex:1;padding:12px;border-radius:10px;border:0;font-size:14px;font-weight:700;transition:.15s}
+.btn-primary{background:var(--river);color:#fff}.btn-primary:hover{background:var(--forest)}
+.btn-ghost{flex:0 0 auto;padding:12px 18px;background:transparent;border:1px solid var(--line);color:var(--ink-soft)}
+.btn-ghost:hover{background:var(--white)}
+.callbtn{display:inline-flex;align-items:center;gap:7px;margin-top:12px;font-size:12.5px;color:var(--gold);text-decoration:none;font-weight:600}
+.callbtn svg{width:14px;height:14px}
+
+/* toast */
+.toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--canopy);color:#fff;
+  padding:12px 22px;border-radius:12px;font-size:13.5px;font-weight:600;box-shadow:var(--shadow-lg);z-index:60;opacity:0;pointer-events:none;
+  transition:.3s;display:flex;align-items:center;gap:10px}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast .bd{width:8px;height:8px;border-radius:50%;background:var(--leaf)}
+
+/* Login Screen */
+#login-screen{position:fixed;top:0;left:0;width:100%;height:100%;background:linear-gradient(135deg,#0C231A 0%,#0A3A1F 100%);display:flex;align-items:center;justify-content:center;z-index:10000}
+#login-screen.hidden{display:none}
+.login-container{background:rgba(15,45,30,0.95);border:1px solid #3AA76B;border-radius:12px;padding:40px;max-width:400px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.5)}
+.login-container h2{color:#C8A951;font-size:24px;margin-bottom:10px;font-weight:700}
+.login-container p{color:rgba(255,255,255,0.7);font-size:13px;margin-bottom:28px}
+.login-container label{display:block;color:#3AA76B;font-size:12px;font-weight:600;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px}
+.login-container input{width:100%;padding:12px 14px;background:rgba(58,167,107,0.08);border:1px solid rgba(58,167,107,0.3);border-radius:6px;color:#fff;font-size:14px;margin-bottom:20px}
+.login-container input:focus{outline:none;border-color:#3AA76B;background:rgba(58,167,107,0.15);box-shadow:0 0 8px rgba(58,167,107,0.2)}
+.login-container button{width:100%;padding:12px;background:linear-gradient(135deg,#3AA76B 0%,#4BC76D 100%);color:#fff;font-weight:700;border:none;border-radius:6px;cursor:pointer;font-size:14px;transition:transform 0.2s,box-shadow 0.2s}
+.login-container button:hover{transform:translateY(-1px);box-shadow:0 8px 20px rgba(58,167,107,0.4)}
+.login-container button:active{transform:translateY(0)}
+.login-error{color:#ff6b6b;font-size:12px;text-align:center;margin-bottom:16px;display:none}
+.login-error.show{display:block}
+
+/* mobile */
+.mtabs{display:none}
+@media(max-width:900px){
+  body{flex-direction:column}
+  .side{display:none}
+  .mtabs{display:flex;position:sticky;top:0;z-index:30;background:var(--canopy);padding:8px;gap:4px;overflow-x:auto}
+  .mtabs a{flex:1;min-width:max-content;text-align:center;padding:9px 14px;border-radius:9px;color:#B4CABB;text-decoration:none;font-size:13px;font-weight:600;white-space:nowrap}
+  .mtabs a.on{background:rgba(58,167,107,.22);color:#fff}
+  .topbar{padding:18px 18px 14px}
+  .topbar h1{font-size:21px}
+  .view{padding:18px}
+  .kpi-grid{grid-template-columns:1fr 1fr;gap:12px}
+  .kpi.hero{grid-column:span 2}
+  .two{grid-template-columns:1fr}
+  .drawer{width:100%}
+  thead th:nth-child(3),tbody td:nth-child(3),thead th:nth-child(4),tbody td:nth-child(4){display:none}
+}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+
+<div id="login-screen">
+  <div class="login-container">
+    <h2>CRM Comercial</h2>
+    <p>Acesso restrito · Digite a senha</p>
+    <div class="login-error" id="login-error">Senha incorreta</div>
+    <label for="login-pwd">Senha</label>
+    <input type="password" id="login-pwd" placeholder="••••••" autocomplete="off">
+    <button onclick="handleLogin()">Entrar</button>
+  </div>
+</div>
+
+<!-- SIDEBAR -->
+<aside class="side">
+  <div class="brand">
+    <div class="mark">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M11 20A7 7 0 0 1 4 13c0-4 3-7 7-9 4 2 7 5 7 9a7 7 0 0 1-7 7Z"/><path d="M11 20V9"/><path d="M11 13l3-3"/><path d="M11 15l-2.5-2.5"/>
+      </svg>
+    </div>
+    <div><b>Amazon Ervas</b><span>CRM Comercial</span></div>
+  </div>
+  <nav class="nav" id="nav">
+    <a href="#" data-v="dash" class="on">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
+      Dashboard</a>
+    <a href="#" data-v="clientes">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      Clientes</a>
+    <a href="#" data-v="cobertura">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
+      Cobertura</a>
+  </nav>
+  <div class="side-foot">
+    <b>Melkatéis · Polar Ice</b><br>Distribuição bairro a bairro em Manaus. Os dados que você registra ficam salvos automaticamente.
+  </div>
+</aside>
+
+<!-- MOBILE TABS -->
+<nav class="mtabs" id="mnav">
+  <a href="#" data-v="dash" class="on">Dashboard</a>
+  <a href="#" data-v="clientes">Clientes</a>
+  <a href="#" data-v="cobertura">Cobertura</a>
+</nav>
+
+<div class="main">
+  <div class="topbar">
+    <div>
+      <div class="eyebrow" id="tb-eye">Visão geral</div>
+      <h1 id="tb-title">Dashboard comercial</h1>
+      <div class="sub" id="tb-sub">Panorama da cobertura de drogarias e das próximas ações de campo.</div>
+    </div>
+    <div class="saved"><span class="dot"></span> Salvo automaticamente</div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <section class="view" id="view-dash">
+    <div class="kpi-grid">
+      <div class="card kpi hero">
+        <svg class="ring" viewBox="0 0 120 120">
+          <circle cx="60" cy="60" r="50" fill="none" stroke="rgba(255,255,255,.14)" stroke-width="11"/>
+          <circle id="ring-fg" cx="60" cy="60" r="50" fill="none" stroke="var(--gold)" stroke-width="11" stroke-linecap="round" stroke-dasharray="314" stroke-dashoffset="314" transform="rotate(-90 60 60)"/>
+          <text id="ring-txt" x="60" y="66" text-anchor="middle" font-size="26" fill="#fff">0%</text>
+        </svg>
+        <div class="hero-txt">
+          <div class="lbl">Cobertura geral</div>
+          <div class="big" id="hero-cov">0%</div>
+          <div class="cap" id="hero-cap">de <b id="hero-tot">0</b> drogarias mapeadas já são clientes ativos</div>
+        </div>
+      </div>
+      <div class="card kpi"><div class="lbl">Clientes ativos</div><div class="num tnum" id="k-ativos">0</div><div class="foot" id="k-ativos-f">comprando atualmente</div></div>
+      <div class="card kpi"><div class="lbl">Em prospecção</div><div class="num tnum" id="k-prosp">0</div><div class="foot">negociação em andamento</div></div>
+      <div class="card kpi"><div class="lbl">Nunca visitadas</div><div class="num tnum" id="k-nunca">0</div><div class="foot">oportunidades em aberto</div></div>
+    </div>
+
+    <div class="two">
+      <div class="card panel">
+        <h3>Situação da carteira</h3>
+        <div class="ph">Distribuição das 185 drogarias por status comercial</div>
+        <div class="bars" id="sit-bars"></div>
+      </div>
+      <div class="card panel">
+        <h3>Próximas visitas</h3>
+        <div class="ph">Agendamentos registrados, dos mais próximos aos futuros</div>
+        <div class="visits" id="visit-list"></div>
+      </div>
+    </div>
+
+    <div class="card panel canopy-wrap">
+      <h3>Cobertura por bairro</h3>
+      <div class="ph">Toque num bairro para filtrar os clientes daquela região · ordenado por prioridade de ataque</div>
+      <div class="canopy" id="dash-canopy"></div>
+    </div>
+  </section>
+
+  <!-- CLIENTES -->
+  <section class="view hide" id="view-clientes">
+    <div class="toolbar">
+      <div class="search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        <input id="q" type="text" placeholder="Buscar drogaria ou endereço…">
+      </div>
+      <select class="filter" id="f-bairro"></select>
+      <select class="filter" id="f-sit">
+        <option value="">Todas as situações</option>
+        <option value="ativo">Ativo</option>
+        <option value="prospeccao">Prospecção</option>
+        <option value="inativo">Inativo</option>
+        <option value="nunca">Nunca visitado</option>
+      </select>
+      <span class="count-pill"><b id="c-count">0</b> drogarias</span>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr>
+          <th>Drogaria</th><th>Bairro</th><th>Telefone</th><th>Avaliação</th><th>Situação</th><th>Próx. visita</th>
+        </tr></thead>
+        <tbody id="cli-body"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- COBERTURA -->
+  <section class="view hide" id="view-cobertura">
+    <div class="card panel canopy-wrap" style="margin-bottom:18px">
+      <h3>Mapa de calor — Manaus vista do alto</h3>
+      <div class="ph">Cada bloco é um bairro. A cor mostra quanto da região já é cliente ativo.</div>
+      <div class="canopy" id="cob-canopy"></div>
+      <div class="legend">
+        <span><i style="background:var(--leaf)"></i> Alta (≥60%) — manter</span>
+        <span><i style="background:var(--amber)"></i> Parcial (30–59%) — reforçar</span>
+        <span><i style="background:var(--clay)"></i> Baixa (&lt;30%) — atacar</span>
+      </div>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr>
+          <th class="rank-col">#</th><th>Bairro / Região</th><th>Total</th><th>Ativos</th><th>Cobertura</th><th>Prioridade</th>
+        </tr></thead>
+        <tbody id="cob-body"></tbody>
+      </table>
+    </div>
+  </section>
+</div>
+
+<!-- DRAWER -->
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="drawer">
+  <div class="dr-head">
+    <button class="dr-close" id="dr-close" aria-label="Fechar">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </button>
+    <div class="bn" id="dr-bairro">—</div>
+    <h2 id="dr-nome">—</h2>
+    <div class="addr" id="dr-addr">—</div>
+    <a class="callbtn" id="dr-call" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.9.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92Z"/></svg><span id="dr-call-t">Ligar</span></a>
+  </div>
+  <div class="dr-body">
+    <div class="fld">
+      <label>Situação comercial</label>
+      <div class="sit-pick" id="sit-pick">
+        <button class="sit-opt" data-v="ativo"><span class="bd"></span>Ativo</button>
+        <button class="sit-opt" data-v="prospeccao"><span class="bd"></span>Prospecção</button>
+        <button class="sit-opt" data-v="inativo"><span class="bd"></span>Inativo</button>
+        <button class="sit-opt" data-v="nunca"><span class="bd"></span>Nunca visitado</button>
+      </div>
+    </div>
+    <div class="row2">
+      <div class="fld"><label>Última visita</label><input type="date" id="f-ultima"></div>
+      <div class="fld"><label>Próxima visita</label><input type="date" id="f-proxima"></div>
+    </div>
+    <div class="row2">
+      <div class="fld"><label>Frequência de compra</label>
+        <select id="f-freq"><option value="">—</option><option>Semanal</option><option>Quinzenal</option><option>Mensal</option><option>Esporádica</option></select>
+      </div>
+      <div class="fld"><label>Valor médio (R$)</label><input type="number" id="f-valor" placeholder="0,00" min="0" step="10"></div>
+    </div>
+    <div class="fld"><label>Responsável</label><input type="text" id="f-resp" placeholder="Vendedor(a) que atende"></div>
+    <div class="fld"><label>Produtos vendidos / observações</label><textarea id="f-obs" placeholder="Ex.: leva Melkatéis toda semana; interessado na linha Polar Ice…"></textarea></div>
+  </div>
+  <div class="dr-foot">
+    <button class="btn btn-primary" id="dr-save">Salvar registro</button>
+    <button class="btn btn-ghost" id="dr-cancel">Cancelar</button>
+  </div>
+</aside>
+
+<div class="toast" id="toast"><span class="bd"></span><span id="toast-t">Salvo</span></div>
+
+<script>
+// Firebase Config — UPDATE WITH YOUR REAL CREDENTIALS
+// Get these from Firebase Console → Project Settings
+const firebaseConfig = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "crm---vendas--ervas.firebaseapp.com",
+  projectId: "crm---vendas--ervas",
+  storageBucket: "crm---vendas--ervas.appspot.com",
+  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+  appId: "YOUR_APP_ID"
+};
+
+// Initialize Firebase
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+// Auth & UI State
+let isAuthenticated = false;
+const CRM_PASSWORD = 'ervalim';
+
+async function handleLogin(){
+  const pwd = document.getElementById('login-pwd').value;
+  const errorEl = document.getElementById('login-error');
+
+  if(pwd === CRM_PASSWORD){
+    isAuthenticated = true;
+    document.getElementById('login-screen').classList.add('hidden');
+    await loadOverrides();
+    init();
+  } else {
+    errorEl.classList.add('show');
+    setTimeout(() => errorEl.classList.remove('show'), 2000);
+  }
+}
+
+// Allow Enter key to submit
+document.addEventListener('DOMContentLoaded', () => {
+  const pwdInput = document.getElementById('login-pwd');
+  if(pwdInput) pwdInput.addEventListener('keypress', (e) => {
+    if(e.key === 'Enter') handleLogin();
+  });
+});
+
+const SEED = [{"id": 0, "bairro": "Centro / Praça 14", "nome": "Santo Remédio Boulevard 24h", "endereco": "Av. Álvaro Botelho Maia, 742", "telefone": "(92) 3212-8000", "horario": "24h", "rating": 4.4}, {"id": 1, "bairro": "Centro / Praça 14", "nome": "Santo Remédio Joaquim Nabuco 24h", "endereco": "Av. Joaquim Nabuco, 1841", "telefone": "(92) 3212-8000", "horario": "24h", "rating": 4.4}, {"id": 2, "bairro": "Centro / Praça 14", "nome": "Drogaria FarmaBem Boulevard I", "endereco": "Rod. Álvaro Maia, 440", "telefone": "(92) 3617-2800", "horario": "5h-21h", "rating": 4.7}, {"id": 3, "bairro": "Centro / Praça 14", "nome": "Drogaria Mega Popular", "endereco": "R. Silva Ramos, 416", "telefone": "(69) 3222-0890", "horario": "7h-22h", "rating": 4.7}, {"id": 4, "bairro": "Centro / Praça 14", "nome": "PagueMenos Joaquim Nabuco", "endereco": "Av. Joaquim Nabuco, 2305", "telefone": "(92) 4002-8282", "horario": "6h40-22h", "rating": 4.5}, {"id": 5, "bairro": "Centro / Praça 14", "nome": "Drogaria Mais Saúde", "endereco": "Av. Leonardo Malcher, 1588", "telefone": "(92) 3308-9050", "horario": "7h-17h", "rating": 5.0}, {"id": 6, "bairro": "Centro / Praça 14", "nome": "Drogaria Lima", "endereco": "Av. Constantino Nery, 650", "telefone": "(92) 98237-1260", "horario": "8h-21h", "rating": 4.5}, {"id": 7, "bairro": "Centro / Praça 14", "nome": "Medicamentos Manaus", "endereco": "Av. Constantino Nery, 732", "telefone": "(92) 99199-0000", "horario": "8h-20h", "rating": 4.2}, {"id": 8, "bairro": "Nossa Sra. das Graças", "nome": "Holy Remedy Djalma 24h", "endereco": "Av. Djalma Batista, 946", "telefone": "(92) 3212-8000", "horario": "24h", "rating": 4.2}, {"id": 9, "bairro": "Nossa Sra. das Graças", "nome": "Drogasil Djalma Batista", "endereco": "Av. Djalma Batista, 700", "telefone": "(92) 99191-9682", "horario": "24h", "rating": 3.9}, {"id": 10, "bairro": "Cidade Nova / Nova Cidade", "nome": "Drogarias Nazaré Cidade Nova", "endereco": "R. Iritama, 98", "telefone": "(92) 99518-7344", "horario": "7h-21h", "rating": 4.6}, {"id": 11, "bairro": "Cidade Nova / Nova Cidade", "nome": "Santo Remédio Cidade Nova 24h", "endereco": "R. Guapo, 68", "telefone": "(92) 3212-8000", "horario": "24h", "rating": 4.1}, {"id": 12, "bairro": "Cidade Nova / Nova Cidade", "nome": "Santo Remédio Nova Cidade", "endereco": "R. Indianápolis, 328", "telefone": "(92) 3212-8000", "horario": "7h-23h", "rating": 4.4}, {"id": 13, "bairro": "Cidade Nova / Nova Cidade", "nome": "Drogaria Bom Preço Nova Cidade (07)", "endereco": "Av. Margarita, 14", "telefone": "(92) 3090-2222", "horario": "7h-23h", "rating": 3.9}, {"id": 14, "bairro": "Cidade Nova / Nova Cidade", "nome": "Drogaria Yasmim", "endereco": "R. Padre João Ribeiro, 03", "telefone": "(92) 99338-6712", "horario": "7h-23h", "rating": 4.3}, {"id": 15, "bairro": "Cidade Nova / Nova Cidade", "nome": "Farmácia Flexfarma Cidade Nova", "endereco": "Av. Timbiras, 750", "telefone": "(92) 98185-9287", "horario": "7h-22h", "rating": 5.0}, {"id": 16, "bairro": "Cidade Nova / Nova Cidade", "nome": "Drogaria Pontes", "endereco": "R. Iritama, 156", "telefone": "(92) 3346-2867", "horario": "7h-21h", "rating": 4.6}, {"id": 17, "bairro": "Cidade Nova / Nova Cidade", "nome": "Santo Remédio Cidade Nova T3", "endereco": "R. Prof. Felix Valois, 305", "telefone": "(92) 3212-8000", "horario": "7h-23h", "rating": 3.9}, {"id": 18, "bairro": "Cidade Nova / Nova Cidade", "nome": "Drogaria Casa Do Remédio", "endereco": "Av. Secundária I, 23", "telefone": "", "horario": "8h-22h", "rating": 5.0}, {"id": 19, "bairro": "Cidade Nova / Nova Cidade", "nome": "Drogaria Raio de Sol Nova Cidade", "endereco": "Av. Margarita - Cidade de Deus", "telefone": "(92) 99214-3955", "horario": "8h-21h", "rating": 4.7}, {"id": 20, "bairro": "Compensa", "nome": "Farmácia Pague Menos Compensa", "endereco": "Av. Brasil, 2395", "telefone": "(92) 4002-8282", "horario": "7h-21h", "rating": 3.3}, {"id": 21, "bairro": "Compensa", "nome": "Drogaria Mega Popular Compensa", "endereco": "Av. Brasil, 1325", "telefone": "(92) 99967-0000", "horario": "7h-23h", "rating": 4.1}, {"id": 22, "bairro": "Compensa", "nome": "Drogarias Central Farma", "endereco": "Av. Oscar Borel, 41", "telefone": "(92) 99363-4772", "horario": "8h-19h30", "rating": 5.0}, {"id": 23, "bairro": "Compensa", "nome": "Farmácia Super Popular", "endereco": "Av. Oscar Borel, 224", "telefone": "(92) 98410-1932", "horario": "7h30-23h30", "rating": 4.8}, {"id": 24, "bairro": "Compensa", "nome": "Drogaria Fortaleza Super Descontão", "endereco": "R. Antônio José Saraiva", "telefone": "(92) 99142-2651", "horario": "7h30-21h30", "rating": 3.5}, {"id": 25, "bairro": "Compensa", "nome": "Drogaria Bastos Compensa", "endereco": "Av. Oscar Borel, 15", "telefone": "(92) 99224-5257", "horario": "7h-22h", "rating": 5.0}, {"id": 26, "bairro": "Compensa", "nome": "Drogaria Remédio do Povo", "endereco": "R. Izaurina Braga, 06", "telefone": "(92) 99380-0022", "horario": "8h-20h30", "rating": 4.7}, {"id": 27, "bairro": "Compensa", "nome": "Drogaria Cabral", "endereco": "Av. Brasil, 201", "telefone": "(92) 3232-1210", "horario": "7h-21h", "rating": 4.3}, {"id": 28, "bairro": "Compensa", "nome": "Farma Popular Mix do Trabalhador", "endereco": "Av. Cel. Cyrillo Neves, 200", "telefone": "(92) 99168-7451", "horario": "8h-22h", "rating": 3.0}, {"id": 29, "bairro": "Compensa", "nome": "Drogaria JR Popular", "endereco": "R. Alberto Rangel, 40", "telefone": "(92) 99209-6859", "horario": "7h-23h", "rating": 4.9}, {"id": 30, "bairro": "Japiim", "nome": "Flexfarma Japiim", "endereco": "Av. Rodrigo Otávio, 46", "telefone": "(92) 99256-8708", "horario": "7h-23h", "rating": 4.2}, {"id": 31, "bairro": "Japiim", "nome": "Drogaria Japiim N. Sra. de Fátima", "endereco": "R. Monte Castelo, 603", "telefone": "(92) 99428-2483", "horario": "8h-20h30", "rating": 5.0}, {"id": 32, "bairro": "Japiim", "nome": "Farmabem Japiim Dobermann", "endereco": "Av. Rodrigo Otávio, 46", "telefone": "(92) 98422-5540", "horario": "7h-23h", "rating": 4.2}, {"id": 33, "bairro": "Japiim", "nome": "Santo Remédio Japiim", "endereco": "Av. da Penetração II, 76", "telefone": "(92) 3212-8000", "horario": "7h-23h", "rating": 4.7}, {"id": 34, "bairro": "Japiim", "nome": "Drogaria FarmaBem Sen. Fábio Lucena", "endereco": "Beco Sen. Fábio Lucena, 87", "telefone": "(92) 3617-2800", "horario": "4h-20h45", "rating": 4.4}, {"id": 35, "bairro": "Japiim", "nome": "Drogaria Med Farma Japiim", "endereco": "Av. Tefé, 02", "telefone": "(92) 98424-2347", "horario": "8h-20h", "rating": 4.8}, {"id": 36, "bairro": "Japiim", "nome": "Drogasil Rodrigo Otávio Japiim", "endereco": "Av. Rodrigo Otávio, 5074", "telefone": "(92) 99419-4789", "horario": "7h-23h", "rating": 4.8}, {"id": 37, "bairro": "Japiim", "nome": "Drogaria Pinto", "endereco": "R. Maria Mansour, 448", "telefone": "(92) 99295-7793", "horario": "7h-20h", "rating": 4.3}, {"id": 38, "bairro": "Japiim", "nome": "Drogaria São Firmino", "endereco": "Av. Jorge Biváqua", "telefone": "(92) 98843-0502", "horario": "7h-21h", "rating": 5.0}, {"id": 39, "bairro": "Japiim", "nome": "Pharmacy Flex Farma", "endereco": "Av. Tefé, 988", "telefone": "(92) 99483-1303", "horario": "7h-22h", "rating": 3.9}, {"id": 40, "bairro": "Alvorada", "nome": "Drogarias Bom Preço Alvorada (13)", "endereco": "R. João Paulo I, 355", "telefone": "(92) 3090-2222", "horario": "7h-23h", "rating": 3.1}, {"id": 41, "bairro": "Alvorada", "nome": "Drogaria Alvorada", "endereco": "Av. B, 01", "telefone": "(92) 99418-9515", "horario": "7h-23h", "rating": 4.3}, {"id": 42, "bairro": "Alvorada", "nome": "Drogaria Mais Primavera Alvorada", "endereco": "R. Prof. Abílio Alencar, 420", "telefone": "(92) 99212-3327", "horario": "7h15-22h30", "rating": 3.0}, {"id": 43, "bairro": "Alvorada", "nome": "Farmamix Drogarias Alvorada", "endereco": "Tv. Alvorada, 01A", "telefone": "(92) 99242-6571", "horario": "7h-23h", "rating": 4.6}, {"id": 44, "bairro": "Alvorada", "nome": "Drogaria Mais Farma (Multifarma)", "endereco": "R. Prof. Isaura Barroncas", "telefone": "(92) 99360-5600", "horario": "7h-21h30", "rating": 4.7}, {"id": 45, "bairro": "Petrópolis", "nome": "Drogaria Katyane", "endereco": "R. Benjamin Constant", "telefone": "(92) 99354-2180", "horario": "8h-0h", "rating": 3.9}, {"id": 46, "bairro": "Petrópolis", "nome": "Farmácias Manaus Farma", "endereco": "R. Aderson de Menezes, 7", "telefone": "(92) 99312-6060", "horario": "7h-23h", "rating": 5.0}, {"id": 47, "bairro": "Petrópolis", "nome": "Drogaria Bom Preço Petrópolis (12)", "endereco": "Beco D. Raquel de Souza, 43", "telefone": "(92) 3090-2222", "horario": "7h-23h", "rating": 4.8}, {"id": 48, "bairro": "Petrópolis", "nome": "Farmácias Saúde Popular", "endereco": "R. Benjamin Constant, 400", "telefone": "(92) 98595-1010", "horario": "8h-0h", "rating": 4.1}, {"id": 49, "bairro": "Petrópolis", "nome": "PharmaMed Cel. Ferreira Araújo", "endereco": "R. Cel. Ferreira de Araújo, 452-D", "telefone": "(92) 3663-3232", "horario": "8h-20h30", "rating": 5.0}, {"id": 50, "bairro": "São José Operário", "nome": "Drogarias Nazaré São José", "endereco": "Av. Autaz Mirim, 60", "telefone": "(92) 3631-0443", "horario": "7h-23h", "rating": 4.8}, {"id": 51, "bairro": "São José Operário", "nome": "Santo Remédio São José", "endereco": "Av. Autaz Mirim, 23", "telefone": "(92) 3212-8000", "horario": "7h-23h", "rating": 4.7}, {"id": 52, "bairro": "São José Operário", "nome": "Drogaria São José", "endereco": "R. Cambixe, 3", "telefone": "", "horario": "7h-20h", "rating": 3.0}, {"id": 53, "bairro": "São José Operário", "nome": "Drogaria do Trabalhador do Brasil", "endereco": "R. Edmundo Soares, 485", "telefone": "(92) 99160-6800", "horario": "7h-20h", "rating": 5.0}, {"id": 54, "bairro": "São José Operário", "nome": "Drogaria Alexandrina Farma Mix", "endereco": "R. José Romão, 1539", "telefone": "(92) 98406-9543", "horario": "7h-22h", "rating": 5.0}, {"id": 55, "bairro": "São José Operário", "nome": "Farmácia Pague Menos São José", "endereco": "Av. Autaz Mirim, 5981 A", "telefone": "(92) 4002-8282", "horario": "7h-21h", "rating": 3.7}, {"id": 56, "bairro": "São José Operário", "nome": "Drogaria Master Bem", "endereco": "R. Canopus, 510", "telefone": "(92) 98519-9001", "horario": "7h30-22h", "rating": 5.0}, {"id": 57, "bairro": "São José Operário", "nome": "Drogaria TopFarma", "endereco": "R. Ananás, 389", "telefone": "(92) 98504-9798", "horario": "7h-22h", "rating": 5.0}, {"id": 58, "bairro": "São José Operário", "nome": "+ Remédios Drogarias", "endereco": "Av. Cosme Ferreira", "telefone": "(92) 99353-5353", "horario": "8h-20h", "rating": 5.0}, {"id": 59, "bairro": "São José Operário", "nome": "Drugstore Low Price", "endereco": "R. José Romão, 154", "telefone": "(92) 99112-8248", "horario": "6h-22h", "rating": 4.7}, {"id": 60, "bairro": "Coroado", "nome": "Santo Remédio Coroado", "endereco": "Av. Cosme Ferreira, 444", "telefone": "(92) 3212-8000", "horario": "7h-23h", "rating": 4.5}, {"id": 61, "bairro": "Coroado", "nome": "Drogaria Deborah", "endereco": "R. Ouro Preto, 429", "telefone": "(92) 99205-1580", "horario": "7h-23h", "rating": 4.4}, {"id": 62, "bairro": "Coroado", "nome": "Drogasil Cosme Ferreira", "endereco": "Av. Cosme Ferreira, 2184", "telefone": "(92) 99410-5614", "horario": "7h-23h", "rating": 3.5}, {"id": 63, "bairro": "Coroado", "nome": "Drogarias NeoFarma", "endereco": "R. Ouro Preto, 628", "telefone": "(92) 99223-6255", "horario": "7h-1h", "rating": 3.7}, {"id": 64, "bairro": "Coroado", "nome": "Droga Cunha", "endereco": "R. Chuva Branca, 01A", "telefone": "(92) 3248-9994", "horario": "7h-22h30", "rating": 4.5}, {"id": 65, "bairro": "Coroado", "nome": "Drogaria Farma Rocha Coroado", "endereco": "R. Ouro Preto, 590", "telefone": "(92) 99432-6145", "horario": "8h-21h", "rating": 5.0}, {"id": 66, "bairro": "Coroado", "nome": "Drogaria Sofia", "endereco": "Av. Beira Mar, 66", "telefone": "(92) 99321-5328", "horario": "7h30-22h", "rating": 4.5}, {"id": 67, "bairro": "Coroado", "nome": "Drogaria Oliveira", "endereco": "Av. Beira Rio, 669", "telefone": "(92) 99480-8012", "horario": "7h-23h", "rating": 4.9}, {"id": 68, "bairro": "Coroado", "nome": "Drogaria Gabriel", "endereco": "R. Marquesa de Santos, 400", "telefone": "(92) 99433-3266", "horario": "7h-21h", "rating": 4.4}, {"id": 69, "bairro": "Coroado", "nome": "Droga Nova Pague Menos", "endereco": "R. Ouro Preto, 614", "telefone": "(92) 99248-3464", "horario": "7h-20h30", "rating": 4.6}, {"id": 70, "bairro": "Aleixo", "nome": "Drogasil Via Láctea", "endereco": "Av. Via Láctea, 825", "telefone": "(92) 99401-9916", "horario": "7h-23h", "rating": 3.6}, {"id": 71, "bairro": "Aleixo", "nome": "Drogarias Mezi Aleixo", "endereco": "Av. André Araújo, 763", "telefone": "(92) 98197-0330", "horario": "7h-23h", "rating": 4.2}, {"id": 72, "bairro": "Aleixo", "nome": "Farmácia Pague Menos Efigênio Salles", "endereco": "Av. Efigênio Salles, 1170", "telefone": "(92) 4002-8282", "horario": "24h (seg-sáb)", "rating": 4.0}, {"id": 73, "bairro": "Aleixo", "nome": "Farma Gomes", "endereco": "R. Gabriel Gonçalves, 42a", "telefone": "(92) 99495-3040", "horario": "8h-20h", "rating": 5.0}, {"id": 74, "bairro": "Aleixo", "nome": "Drogaria Mais Saúde Aleixo", "endereco": "R. Gabriel Gonçalves, 42B", "telefone": "", "horario": "8h-20h", "rating": 5.0}, {"id": 75, "bairro": "Novo Aleixo / Mutirão", "nome": "Drogarias Pietrão", "endereco": "Av. Nathan L. X. de Albuquerque", "telefone": "(92) 99944-1020", "horario": "8h-23h30", "rating": 4.9}, {"id": 76, "bairro": "Novo Aleixo / Mutirão", "nome": "Drogaria do Trabalhador Novo Aleixo", "endereco": "Av. João Câmara, 545", "telefone": "(92) 99251-3053", "horario": "7h-22h45", "rating": 4.6}, {"id": 77, "bairro": "Novo Aleixo / Mutirão", "nome": "Farmamix Drogarias Mutirão", "endereco": "R. Itaetê, 09", "telefone": "(92) 2121-1212", "horario": "7h-23h30", "rating": 4.9}, {"id": 78, "bairro": "Novo Aleixo / Mutirão", "nome": "Farma Popular Novo Aleixo", "endereco": "R. Gurjaú, 54", "telefone": "(92) 99511-4585", "horario": "7h30-22h", "rating": 5.0}, {"id": 79, "bairro": "Novo Aleixo / Mutirão", "nome": "Drogaria Brasil Farma Novo Aleixo", "endereco": "R. Itaetê, 200", "telefone": "(92) 99481-7441", "horario": "7h30-19h", "rating": 4.9}, {"id": 80, "bairro": "Parque 10 de Novembro", "nome": "Drogaria do Bem Parque 10", "endereco": "R. Monte Fuji, 02", "telefone": "(92) 99290-0709", "horario": "7h30-21h30", "rating": 5.0}, {"id": 81, "bairro": "Parque 10 de Novembro", "nome": "Santo Remédio Parque Dez", "endereco": "R. 11, Qd 06 Parque Tropical", "telefone": "(92) 3212-8000", "horario": "7h-23h", "rating": 4.5}, {"id": 82, "bairro": "Parque 10 de Novembro", "nome": "Drogaria FarmaBem Parque 10", "endereco": "R. Prof. Castelo Branco, 654", "telefone": "(92) 3617-2800", "horario": "7h-23h", "rating": 4.8}, {"id": 83, "bairro": "Parque 10 de Novembro", "nome": "Drogasil Tancredo Neves", "endereco": "Av. Tancredo Neves, 2", "telefone": "(92) 99466-7289", "horario": "7h-23h", "rating": 4.2}, {"id": 84, "bairro": "Parque 10 de Novembro", "nome": "Farmácia Pague Menos Mal. Junot", "endereco": "R. Mal. Junot, 37", "telefone": "(92) 4002-8282", "horario": "24h (ter-sex)", "rating": 4.1}, {"id": 85, "bairro": "Parque 10 de Novembro", "nome": "Santo Remédio Parque Dez II", "endereco": "R. Joaquim Curado, 239", "telefone": "(92) 3212-8000", "horario": "7h-23h", "rating": 4.9}, {"id": 86, "bairro": "Parque 10 de Novembro", "nome": "Farmácia Pague Menos Tancredo Neves", "endereco": "Av. Tancredo Neves, 1066", "telefone": "(92) 4002-8282", "horario": "7h-23h", "rating": 4.1}, {"id": 87, "bairro": "Parque 10 de Novembro", "nome": "Drogaria Mega Popular Parque 10", "endereco": "Av. Tancredo Neves, 894", "telefone": "", "horario": "7h-23h", "rating": 4.6}, {"id": 88, "bairro": "Parque 10 de Novembro", "nome": "Drogaria Trindade", "endereco": "R. Alexandre Magno, 32", "telefone": "(92) 99417-1381", "horario": "8h-23h", "rating": 4.7}, {"id": 89, "bairro": "Parque 10 de Novembro", "nome": "FarmaPlus Parque 10", "endereco": "Av. Maneca Marques, 431", "telefone": "(92) 99902-4432", "horario": "7h-22h", "rating": 4.0}, {"id": 90, "bairro": "Flores", "nome": "Drogaria Mais Primavera Flores", "endereco": "R. Venezuela, 555", "telefone": "(92) 99476-0277", "horario": "8h-22h", "rating": 4.3}, {"id": 91, "bairro": "Flores", "nome": "Drogaria Principal", "endereco": "R. Argentina, 550", "telefone": "(92) 99183-8130", "horario": "7h30-22h", "rating": 4.8}, {"id": 92, "bairro": "Flores", "nome": "Santo Remédio Torquato Flores 24h", "endereco": "Av. Torquato Tapajós, 4160", "telefone": "(92) 3212-8000", "horario": "24h", "rating": 4.4}, {"id": 93, "bairro": "Flores", "nome": "Well Farma Drugstore (Max Teixeira)", "endereco": "Av. Max Teixeira, 200", "telefone": "(92) 3617-2800", "horario": "7h-23h", "rating": 4.7}, {"id": 94, "bairro": "Flores", "nome": "Drogaria Gonçalves", "endereco": "Flores", "telefone": "(92) 3636-1036", "horario": "7h-0h", "rating": 4.1}, {"id": 95, "bairro": "Flores", "nome": "Farmabem São Judas Tadeu", "endereco": "R. Barão do Rio Branco, 682", "telefone": "(92) 3617-2800", "horario": "7h-23h", "rating": 4.2}, {"id": 96, "bairro": "Flores", "nome": "Farmácia Manaus HiperFarma", "endereco": "Av. B, 358", "telefone": "(92) 98494-9047", "horario": "8h-0h", "rating": 5.0}, {"id": 97, "bairro": "Flores", "nome": "Farmácia Pague Menos Torquato", "endereco": "Av. Torquato Tapajós, 1762 A", "telefone": "(92) 4002-8282", "horario": "24h (ter-sex)", "rating": 3.1}, {"id": 98, "bairro": "Flores", "nome": "Drogarias FarmaMix Flores", "endereco": "R. Visc. de Utinga, 373", "telefone": "(92) 99282-7730", "horario": "7h-23h30", "rating": 3.9}, {"id": 99, "bairro": "Flores", "nome": "FarmaBem Marcodiesel", "endereco": "Av. Torquato Tapajós, 5200", "telefone": "(92) 3617-2800", "horario": "4h-21h", "rating": 4.2}, {"id": 100, "bairro": "Cidade de Deus", "nome": "Drogarias Super Popular CDD", "endereco": "Av. N. Sra. de Fátima, 595", "telefone": "(92) 99256-5541", "horario": "7h-21h45", "rating": 4.3}, {"id": 101, "bairro": "Cidade de Deus", "nome": "Santo Remédio Cidade de Deus", "endereco": "Av. N. Sra. da Conceição, 772", "telefone": "(92) 3212-8000", "horario": "7h-22h", "rating": 4.9}, {"id": 102, "bairro": "Cidade de Deus", "nome": "Drogaria MT", "endereco": "R. N. Sra. dos Navegante, 28", "telefone": "(92) 99200-1829", "horario": "8h30-22h", "rating": 5.0}, {"id": 103, "bairro": "Cidade de Deus", "nome": "Drogaria Mais Que Popular", "endereco": "Av. N. Sra. de Fátima, 691A", "telefone": "(92) 99444-0070", "horario": "8h-20h", "rating": 5.0}, {"id": 104, "bairro": "Cidade de Deus", "nome": "Drogaria Saúde do Povo", "endereco": "Av. N. Sra. da Conceição, 1166", "telefone": "(92) 99429-0766", "horario": "7h-23h30", "rating": 5.0}, {"id": 105, "bairro": "Cidade de Deus", "nome": "Drogaria Farma Lima A. Nascimento", "endereco": "R. Marcos Cavalcante", "telefone": "(92) 98488-1475", "horario": "7h-22h", "rating": 4.7}, {"id": 106, "bairro": "Cidade de Deus", "nome": "Drogaria Bom Remédio", "endereco": "Av. N. Sra. da Conceição, 1048", "telefone": "", "horario": "7h-22h", "rating": 4.8}, {"id": 107, "bairro": "Cidade de Deus", "nome": "Drogaria Bom Preço CDD (05)", "endereco": "Av. N. Sra. de Fátima, 183", "telefone": "(92) 3090-2222", "horario": "7h-23h", "rating": 4.2}, {"id": 108, "bairro": "Cidade de Deus", "nome": "Drogaria Farma Lima", "endereco": "Av. N. Sra. de Fátima, 400", "telefone": "(92) 99350-5319", "horario": "8h-21h", "rating": 4.2}, {"id": 109, "bairro": "Cidade de Deus", "nome": "Droga Nossa", "endereco": "Av. Autaz Mirim", "telefone": "(92) 99366-8856", "horario": "7h-0h", "rating": 4.4}, {"id": 110, "bairro": "Novo Israel", "nome": "Drogaria Universaly", "endereco": "R. Rufino de Elizalde, 460", "telefone": "(92) 99222-5454", "horario": "8h-22h", "rating": 4.9}, {"id": 111, "bairro": "Novo Israel", "nome": "Drogaria Millenium 1", "endereco": "R. dos Profetas, 105", "telefone": "(36) 654-5403", "horario": "24h", "rating": 4.9}, {"id": 112, "bairro": "Novo Israel", "nome": "Drogaria HiperFarma Novo Israel", "endereco": "Av. Cristã, 70", "telefone": "(92) 98613-3607", "horario": "8h-22h", "rating": 5.0}, {"id": 113, "bairro": "Novo Israel", "nome": "Drogaria Mary", "endereco": "R. Romanos, 65", "telefone": "(92) 3654-1090", "horario": "7h-22h30", "rating": 4.1}, {"id": 114, "bairro": "Novo Israel", "nome": "Drogaria Super Popular Novo Israel", "endereco": "R. Ezequiel, 62", "telefone": "", "horario": "8h-18h", "rating": 4.3}, {"id": 115, "bairro": "Novo Israel", "nome": "Brandão Farma", "endereco": "R. Estrela de Davi", "telefone": "(92) 98436-8686", "horario": "7h-22h", "rating": 5.0}, {"id": 116, "bairro": "Novo Israel", "nome": "Drogaria Aquários", "endereco": "R. Ezequiel, 78", "telefone": "(92) 99976-1458", "horario": "7h-20h", "rating": 3.8}, {"id": 117, "bairro": "Colônia Terra Nova", "nome": "Drogaria Israel", "endereco": "R. San Miguel de Tucumán, 461", "telefone": "(92) 99254-6106", "horario": "7h30-22h", "rating": 5.0}, {"id": 118, "bairro": "Colônia Terra Nova", "nome": "Drogaria Millenium", "endereco": "R. Fenícia, 3", "telefone": "", "horario": "8h-22h", "rating": 4.8}, {"id": 119, "bairro": "Colônia Terra Nova", "nome": "Drogaria Nova Vida", "endereco": "R. Tucandira", "telefone": "(92) 99398-2951", "horario": "7h30-22h", "rating": 4.8}, {"id": 120, "bairro": "Colônia Terra Nova", "nome": "Drogaria BrasilFarma", "endereco": "R. Yanomami, 26", "telefone": "(92) 98228-3470", "horario": "8h-19h30", "rating": 5.0}, {"id": 121, "bairro": "Colônia Terra Nova", "nome": "Drogaria Melissa", "endereco": "R. San Miguel de Tucumán, 480", "telefone": "(92) 99438-1543", "horario": "8h-21h", "rating": 4.9}, {"id": 122, "bairro": "Colônia Terra Nova", "nome": "Drogaria Rebouças", "endereco": "R. São Eusébio, 497", "telefone": "(92) 98409-3543", "horario": "8h-21h", "rating": 4.8}, {"id": 123, "bairro": "Colônia Terra Nova", "nome": "Drogaria FarmaVip", "endereco": "R. Cedar, 966", "telefone": "(92) 99184-8261", "horario": "7h-22h", "rating": 4.8}, {"id": 124, "bairro": "Colônia Terra Nova", "nome": "Firmo Drugstore", "endereco": "Av. Cristã, 243", "telefone": "(92) 99171-3291", "horario": "7h-22h", "rating": 4.2}, {"id": 125, "bairro": "Colônia Terra Nova", "nome": "Drogaria Eliza Terra Nova", "endereco": "R. Marajoara, 150", "telefone": "(92) 99236-5333", "horario": "", "rating": 5.0}, {"id": 126, "bairro": "Colônia Terra Nova", "nome": "Drogarias Popular Monte das Oliveiras", "endereco": "Av. J. H. Bentes Rodrigues, 264", "telefone": "(92) 99411-1837", "horario": "7h-22h", "rating": 4.4}, {"id": 127, "bairro": "Tarumã", "nome": "Drogaria Tarumã", "endereco": "R. Sapucaia, 404", "telefone": "(92) 99149-4824", "horario": "8h-22h30", "rating": 4.9}, {"id": 128, "bairro": "Tarumã", "nome": "Drogaria Millenium Tarumã", "endereco": "R. do Comercio, 342", "telefone": "(92) 99322-1144", "horario": "8h-21h", "rating": 4.9}, {"id": 129, "bairro": "Tarumã", "nome": "Drogaria Baratão da Gente", "endereco": "Av. Dona Otília", "telefone": "(92) 99155-0405", "horario": "8h-2h", "rating": 3.8}, {"id": 130, "bairro": "Tarumã", "nome": "Drogaria Novo Tempo Mix Tarumã", "endereco": "R. Antísthenes Pinto, 200", "telefone": "(92) 99221-1239", "horario": "7h-22h", "rating": 5.0}, {"id": 131, "bairro": "Tarumã", "nome": "Drogasil Dona Otília", "endereco": "Av. Dona Otília, 606", "telefone": "(11) 3004-8007", "horario": "7h-23h", "rating": 3.0}, {"id": 132, "bairro": "Tarumã", "nome": "Drogaria Tarumã Delivery MG", "endereco": "R. Praia dos Fortes", "telefone": "(92) 99434-2549", "horario": "8h-20h", "rating": 5.0}, {"id": 133, "bairro": "Tarumã", "nome": "Drogaria Riachuelo", "endereco": "R. Marquês de Sapucáia, 159", "telefone": "(92) 99183-1042", "horario": "8h-21h", "rating": 4.8}, {"id": 134, "bairro": "Tarumã", "nome": "Drogaria Cidadão", "endereco": "R. Asa Branca, 2", "telefone": "(92) 99458-6870", "horario": "7h-21h", "rating": 4.4}, {"id": 135, "bairro": "Tarumã", "nome": "Drogaria Santa Bárbara", "endereco": "Av. Praia da Ponta Negra, 346", "telefone": "(92) 99382-9674", "horario": "8h-21h", "rating": 4.8}, {"id": 136, "bairro": "Tarumã", "nome": "Drogaria Gomes (Campos Sales)", "endereco": "Av. Dona Otília, 376", "telefone": "(92) 98133-0076", "horario": "7h-21h50", "rating": 4.5}, {"id": 137, "bairro": "Cachoeirinha", "nome": "Santo Remédio Cachoeirinha", "endereco": "Av. Carvalho Leal, 1270", "telefone": "(92) 3212-8000", "horario": "7h-23h", "rating": 4.4}, {"id": 138, "bairro": "Cachoeirinha", "nome": "Droga Rios", "endereco": "Av. Carvalho Leal, 1361", "telefone": "(92) 99425-1053", "horario": "5h-20h", "rating": 4.1}, {"id": 139, "bairro": "Cachoeirinha", "nome": "Farmácia Pague Menos Carvalho Leal", "endereco": "Av. Carvalho Leal, 1259", "telefone": "(92) 4002-8282", "horario": "7h-22h", "rating": 3.8}, {"id": 140, "bairro": "Cachoeirinha", "nome": "Drogasil Tefé", "endereco": "Av. Tefé, 214", "telefone": "(92) 99501-4856", "horario": "7h-22h", "rating": 4.4}, {"id": 141, "bairro": "Cachoeirinha", "nome": "Santo Remédio Borba 24h", "endereco": "Av. Borba, 863", "telefone": "(92) 3212-8000", "horario": "24h", "rating": 4.4}, {"id": 142, "bairro": "Cachoeirinha", "nome": "Drogaria Mega Popular Cachoeirinha", "endereco": "Av. Carvalho Leal, 1239", "telefone": "", "horario": "7h-23h", "rating": 4.5}, {"id": 143, "bairro": "Cachoeirinha", "nome": "Drogaria FarmaBem Codajás", "endereco": "Av. Codajás, 1792", "telefone": "(92) 3617-2800", "horario": "7h-23h", "rating": 4.9}, {"id": 144, "bairro": "Cachoeirinha", "nome": "Drogaria Rodrigues", "endereco": "Av. Castelo Branco, 1770", "telefone": "(92) 98566-5589", "horario": "7h-22h", "rating": 4.5}, {"id": 145, "bairro": "Cachoeirinha", "nome": "Best Farmma", "endereco": "Av. Castelo Branco, 1016-B", "telefone": "(92) 98558-1890", "horario": "8h-19h", "rating": 5.0}, {"id": 146, "bairro": "Educandos", "nome": "Drogaria MedFarma Educandos", "endereco": "Av. Pres. Kennedy, 608", "telefone": "(92) 99365-1750", "horario": "7h-23h", "rating": 4.5}, {"id": 147, "bairro": "Educandos", "nome": "Drogaria Afya Farma", "endereco": "R. Inocêncio de Araújo, 122", "telefone": "(92) 98438-3131", "horario": "7h30-20h", "rating": 5.0}, {"id": 148, "bairro": "Educandos", "nome": "Drogaria Martins", "endereco": "R. Vista Alegre, 307", "telefone": "(92) 3348-1317", "horario": "7h-19h", "rating": 5.0}, {"id": 149, "bairro": "Educandos", "nome": "Drugstore San Francisco", "endereco": "Av. Leopoldo Peres, 141", "telefone": "(92) 3624-4817", "horario": "8h-20h", "rating": 1.0}, {"id": 150, "bairro": "Educandos", "nome": "Pharmacy Drogaria", "endereco": "Av. Leopoldo Peres, 1042", "telefone": "(92) 3629-1313", "horario": "7h30-20h", "rating": 4.9}, {"id": 151, "bairro": "Educandos", "nome": "Drogaria Ana Paula", "endereco": "Av. Leopoldo Peres, 250", "telefone": "(92) 99437-4908", "horario": "8h-19h", "rating": 5.0}, {"id": 152, "bairro": "Educandos", "nome": "Drogaria Popular Educandos", "endereco": "Av. Leopoldo Peres, 295", "telefone": "(92) 99214-7435", "horario": "8h-18h", "rating": 4.6}, {"id": 153, "bairro": "Educandos", "nome": "Bio Medic", "endereco": "Av. Leopoldo Peres, 596", "telefone": "(92) 98565-6560", "horario": "7h-20h", "rating": 5.0}, {"id": 154, "bairro": "Planalto / Campos Elíseos", "nome": "Santo Remédio Planalto", "endereco": "R. Berlin - Campos Elíseos, 03", "telefone": "(92) 3212-8000", "horario": "7h-23h", "rating": 4.7}, {"id": 155, "bairro": "Planalto / Campos Elíseos", "nome": "Drogaria Pharmacy Planalto", "endereco": "R. Ulisses Tapajós, 14", "telefone": "(92) 3343-2346", "horario": "8h-20h", "rating": 4.9}, {"id": 156, "bairro": "Planalto / Campos Elíseos", "nome": "Drogasil Campo Eli (Bruxelas)", "endereco": "R. Bruxelas, 20", "telefone": "(92) 99390-2947", "horario": "7h-23h", "rating": 4.0}, {"id": 157, "bairro": "Planalto / Campos Elíseos", "nome": "Drugstore Santa Monica", "endereco": "Av. Constantinopla, 200", "telefone": "(92) 99439-8313", "horario": "8h-22h", "rating": 4.7}, {"id": 158, "bairro": "Planalto / Campos Elíseos", "nome": "Drogaria Atakadão dos Remédios", "endereco": "Av. Des. João Machado, 4", "telefone": "(92) 3238-8290", "horario": "7h-22h30", "rating": 4.5}, {"id": 159, "bairro": "Planalto / Campos Elíseos", "nome": "Drogasil Laguna", "endereco": "Av. Laguna, 2364", "telefone": "(92) 99197-6073", "horario": "7h-23h", "rating": 4.1}, {"id": 160, "bairro": "Planalto / Campos Elíseos", "nome": "Drogaria Star", "endereco": "Av. Laguna, 03", "telefone": "(92) 99246-9817", "horario": "8h-0h", "rating": 3.9}, {"id": 161, "bairro": "Planalto / Campos Elíseos", "nome": "Drogaria Verde Vida", "endereco": "Av. Laguna, 14", "telefone": "(92) 98611-8414", "horario": "7h-21h", "rating": 5.0}, {"id": 162, "bairro": "Da Paz", "nome": "Drogaria Paz", "endereco": "R. Cmte. Paulo Varela", "telefone": "(92) 98528-3603", "horario": "8h-20h", "rating": 5.0}, {"id": 163, "bairro": "Da Paz", "nome": "Drogaria Pró Saúde Da Paz", "endereco": "R. Cmte. Paulo Varela", "telefone": "(92) 98610-0943", "horario": "8h-20h45", "rating": 5.0}, {"id": 164, "bairro": "Da Paz", "nome": "Drogarias Popular Da Paz", "endereco": "R. Boa Esperança, 944", "telefone": "(92) 99166-1289", "horario": "7h-21h20", "rating": 3.9}, {"id": 165, "bairro": "Da Paz", "nome": "Drogaria Super Popular Da Paz", "endereco": "R. Cmte. Paulo Varela, 240", "telefone": "(92) 98647-0887", "horario": "7h-19h", "rating": 4.8}, {"id": 166, "bairro": "Da Paz", "nome": "Drogaria Santa Pharma", "endereco": "R. Ciro", "telefone": "(92) 99132-1313", "horario": "6h30-20h30", "rating": 4.0}, {"id": 167, "bairro": "Santa Etelvina / Col. Ant. Aleixo", "nome": "Drugstore Santa Maria", "endereco": "R. Samambaia, 03", "telefone": "(92) 98852-2923", "horario": "7h-22h", "rating": 4.5}, {"id": 168, "bairro": "Santa Etelvina / Col. Ant. Aleixo", "nome": "Imperium Farma", "endereco": "Av. J. H. Bento Rodrigues, 503", "telefone": "(92) 3042-2999", "horario": "7h-23h", "rating": 4.5}, {"id": 169, "bairro": "Santa Etelvina / Col. Ant. Aleixo", "nome": "Drogaria Farmarruda", "endereco": "Av. 7 de Maio, 1595", "telefone": "(92) 99191-8769", "horario": "7h30-22h30", "rating": 4.9}, {"id": 170, "bairro": "Santa Etelvina / Col. Ant. Aleixo", "nome": "Drogaria Norte (7 de Maio)", "endereco": "Av. 7 de Maio, 1486", "telefone": "(92) 99415-1368", "horario": "7h-21h", "rating": 3.9}, {"id": 171, "bairro": "Santa Etelvina / Col. Ant. Aleixo", "nome": "MG Farmácia", "endereco": "R. Ayres da Cruz", "telefone": "(92) 99434-2549", "horario": "8h-20h", "rating": 5.0}, {"id": 172, "bairro": "Santa Etelvina / Col. Ant. Aleixo", "nome": "Drogaria Santa Maria 02", "endereco": "Av. 17 de Março, 62", "telefone": "(92) 99200-4600", "horario": "7h-22h", "rating": 4.6}, {"id": 173, "bairro": "Santa Etelvina / Col. Ant. Aleixo", "nome": "Drogaria Santa Maria 03", "endereco": "Av. 7 de Maio, 62", "telefone": "(92) 99215-7125", "horario": "7h-21h", "rating": 3.5}, {"id": 174, "bairro": "Santa Etelvina / Col. Ant. Aleixo", "nome": "Drogaria Disk Vida Mulateiro", "endereco": "Av. Mulateiro, 1235", "telefone": "(92) 98486-7131", "horario": "7h30-19h40", "rating": 5.0}, {"id": 175, "bairro": "Santa Etelvina / Col. Ant. Aleixo", "nome": "Drogaria 7 De Maio 24h", "endereco": "Al. Sete de Maio, 1435", "telefone": "(92) 99313-8074", "horario": "7h-3h", "rating": 4.6}, {"id": 176, "bairro": "Santa Etelvina / Col. Ant. Aleixo", "nome": "Drogaria Pague Leve", "endereco": "Av. 7 de Maio, 43", "telefone": "(92) 98480-0388", "horario": "8h-23h", "rating": 5.0}, {"id": 177, "bairro": "Redenção", "nome": "Drogaria Pintos", "endereco": "R. Campo Grande, 20", "telefone": "(92) 99145-8455", "horario": "7h30-19h30", "rating": 4.9}, {"id": 178, "bairro": "Redenção", "nome": "Drogaria Redenção", "endereco": "R. Campo Grande, 268", "telefone": "(92) 3236-3005", "horario": "8h-20h", "rating": 4.6}, {"id": 179, "bairro": "Redenção", "nome": "Santo Remédio Redenção", "endereco": "R. Campo Grande, 345", "telefone": "(92) 3212-8000", "horario": "7h-22h", "rating": 4.7}, {"id": 180, "bairro": "Redenção", "nome": "Drogarias Popular Redenção", "endereco": "R. Mª Azevedo Ramos, 1853", "telefone": "(92) 99277-6560", "horario": "7h-21h30", "rating": 3.0}, {"id": 181, "bairro": "Redenção", "nome": "Drogarias Santa Farma", "endereco": "R. Campo Grande, 403", "telefone": "(92) 3654-0991", "horario": "7h-21h", "rating": 4.5}, {"id": 182, "bairro": "Redenção", "nome": "Drogaria Popular Hiléia", "endereco": "Alfredo Valois - Hiléia", "telefone": "(92) 99496-8565", "horario": "7h-23h", "rating": 4.4}, {"id": 183, "bairro": "Redenção", "nome": "Drogaria Siqueira", "endereco": "R. Alfredo Valois, 305", "telefone": "(92) 99452-0228", "horario": "8h-22h", "rating": 4.0}, {"id": 184, "bairro": "Redenção", "nome": "Drogaria Bandeira", "endereco": "R. Goiânia, 512", "telefone": "(92) 99405-0427", "horario": "7h-22h", "rating": null}];
+const KEY = 'amazonervas-crm-v1';
+const SIT = {
+  ativo:{t:'Ativo',c:'b-ativo'}, inativo:{t:'Inativo',c:'b-inativo'},
+  prospeccao:{t:'Prospecção',c:'b-prospeccao'}, nunca:{t:'Nunca visitado',c:'b-nunca'}
+};
+const MES = ['JAN','FEV','MAR','ABR','MAI','JUN','JUL','AGO','SET','OUT','NOV','DEZ'];
+let overrides = {};
+let clients = [];
+let editingId = null;
+
+/* ---------- storage (Firestore) ---------- */
+async function loadOverrides(){
+  try {
+    const doc = await db.collection('crm').doc('config').get();
+    overrides = doc.exists ? (doc.data().overrides || {}) : {};
+  } catch(e) {
+    console.error('loadOverrides error:', e);
+    overrides = {};
+  }
+}
+
+async function saveOverrides(){
+  try {
+    await db.collection('crm').doc('config').set({ overrides }, { merge: true });
+  } catch(e) {
+    console.error('saveOverrides error:', e);
+    showToast('Erro ao salvar. Verifique sua conexão.');
+  }
+}
+function merge(){
+  clients = SEED.map(s=>{ const o = overrides[s.id]||{}; return Object.assign({situacao:'nunca',ultima:'',proxima:'',freq:'',valor:'',resp:'',obs:''}, s, o); });
+}
+
+/* ---------- helpers ---------- */
+const $ = s=>document.querySelector(s);
+const $$ = s=>[...document.querySelectorAll(s)];
+function bairros(){ return [...new Set(SEED.map(c=>c.bairro))]; }
+function covFor(b){ const list=clients.filter(c=>c.bairro===b); const a=list.filter(c=>c.situacao==='ativo').length; return {total:list.length, ativos:a, pct:list.length?a/list.length:0}; }
+function heatColor(p){ if(p>=.6) return {a:'#2E9E5B',b:'#1B6E42'}; if(p>=.3) return {a:'#E0A82E',b:'#B07E17'}; return {a:'#C0492E',b:'#8F3421'}; }
+function fmtDate(s){ if(!s) return null; const [y,m,d]=s.split('-').map(Number); return {d:d, m:MES[m-1], full:`${String(d).padStart(2,'0')}/${String(m).padStart(2,'0')}`}; }
+
+/* ---------- dashboard ---------- */
+function renderDash(){
+  const total = clients.length;
+  const ativos = clients.filter(c=>c.situacao==='ativo').length;
+  const prosp = clients.filter(c=>c.situacao==='prospeccao').length;
+  const nunca = clients.filter(c=>c.situacao==='nunca').length;
+  const inativo = clients.filter(c=>c.situacao==='inativo').length;
+  const pct = total? ativos/total : 0;
+
+  $('#k-ativos').textContent = ativos;
+  $('#k-prosp').textContent = prosp;
+  $('#k-nunca').textContent = nunca;
+  $('#hero-tot').textContent = total;
+  $('#hero-cov').textContent = Math.round(pct*100)+'%';
+  animateRing(pct);
+
+  // situação bars
+  const rows = [
+    ['ativo','Ativo','var(--leaf)',ativos],
+    ['prospeccao','Prospecção','var(--amber)',prosp],
+    ['inativo','Inativo','var(--clay)',inativo],
+    ['nunca','Nunca visitado','#A9B3AC',nunca],
+  ];
+  $('#sit-bars').innerHTML = rows.map(([k,label,col,n])=>{
+    const w = total? Math.round(n/total*100):0;
+    return `<div class="barrow"><div class="k"><span class="sw" style="background:${col}"></span>${label}</div>
+      <div class="track"><span style="width:${w}%;background:${col}"></span></div><div class="v tnum">${n}</div></div>`;
+  }).join('');
+
+  // próximas visitas
+  const withDates = clients.filter(c=>c.proxima).sort((a,b)=>a.proxima.localeCompare(b.proxima));
+  const today = new Date().toISOString().slice(0,10);
+  const vl = $('#visit-list');
+  if(!withDates.length){
+    vl.innerHTML = `<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg><div>Nenhuma visita agendada ainda.<br>Abra um cliente e defina a próxima visita.</div></div>`;
+  } else {
+    vl.innerHTML = withDates.slice(0,7).map(c=>{
+      const d = fmtDate(c.proxima); const over = c.proxima < today;
+      return `<div class="visit ${over?'overdue':''}"><div class="cal"><span class="d">${d.d}</span><span class="m">${d.m}</span></div>
+        <div class="info"><b>${c.nome}</b><span>${c.bairro}${over?' · atrasada':''}</span></div></div>`;
+    }).join('');
+  }
+
+  renderCanopy('#dash-canopy', true);
+}
+function animateRing(pct){
+  const fg=$('#ring-fg'), txt=$('#ring-txt'), C=314;
+  let cur=0; const target=pct;
+  const step=()=>{ cur+=(target-cur)*0.12; if(Math.abs(target-cur)<0.002)cur=target;
+    fg.style.strokeDashoffset=C*(1-cur); txt.textContent=Math.round(cur*100)+'%';
+    if(cur!==target) requestAnimationFrame(step); };
+  requestAnimationFrame(step);
+}
+
+/* ---------- canopy ---------- */
+function renderCanopy(sel, clickFilter){
+  const bs = bairros().map(b=>({b, ...covFor(b)})).sort((a,b)=>a.pct-b.pct);
+  $(sel).innerHTML = bs.map(x=>{
+    const col = heatColor(x.pct);
+    return `<div class="tile" data-bairro="${x.b}" style="background:linear-gradient(150deg,${col.a},${col.b})">
+      <div class="veil"></div>
+      <div class="bn">${x.b}</div>
+      <div><div class="pct">${Math.round(x.pct*100)}%</div>
+      <div class="meta">${x.ativos}/${x.total} ativos</div></div>
+    </div>`;
+  }).join('');
+  if(clickFilter){
+    $$(sel+' .tile').forEach(t=>t.onclick=()=>{
+      go('clientes'); $('#f-bairro').value=t.dataset.bairro; renderClientes();
+    });
+  }
+}
+
+/* ---------- cobertura tab ---------- */
+function renderCobertura(){
+  renderCanopy('#cob-canopy', false);
+  $$('#cob-canopy .tile').forEach(t=>t.onclick=()=>{ go('clientes'); $('#f-bairro').value=t.dataset.bairro; renderClientes(); });
+  const bs = bairros().map(b=>({b, ...covFor(b)})).sort((a,b)=>a.pct-b.pct);
+  $('#cob-body').innerHTML = bs.map((x,i)=>{
+    let pr,cls;
+    if(x.pct>=.6){pr='Manter';cls='b-ativo'} else if(x.pct>=.3){pr='Reforçar';cls='b-prospeccao'} else {pr='Atacar';cls='b-inativo'}
+    const col=heatColor(x.pct);
+    return `<tr data-bairro="${x.b}"><td class="rank-col">${i+1}</td>
+      <td class="cli-name">${x.b}</td><td class="tnum">${x.total}</td><td class="tnum">${x.ativos}</td>
+      <td><div style="display:flex;align-items:center;gap:9px"><div class="track" style="width:80px"><span style="width:${Math.round(x.pct*100)}%;background:${col.a}"></span></div><b class="tnum" style="font-size:13px">${Math.round(x.pct*100)}%</b></div></td>
+      <td><span class="badge ${cls}"><span class="bd"></span>${pr}</span></td></tr>`;
+  }).join('');
+  $$('#cob-body tr').forEach(tr=>tr.onclick=()=>{ go('clientes'); $('#f-bairro').value=tr.dataset.bairro; renderClientes(); });
+}
+
+/* ---------- clientes ---------- */
+function renderClientes(){
+  const q=$('#q').value.trim().toLowerCase();
+  const fb=$('#f-bairro').value, fs=$('#f-sit').value;
+  let list = clients.filter(c=>{
+    if(fb && c.bairro!==fb) return false;
+    if(fs && c.situacao!==fs) return false;
+    if(q && !(c.nome.toLowerCase().includes(q)||(c.endereco||'').toLowerCase().includes(q))) return false;
+    return true;
+  });
+  $('#c-count').textContent = list.length;
+  $('#cli-body').innerHTML = list.map(c=>{
+    const s=SIT[c.situacao]; const d=fmtDate(c.proxima);
+    return `<tr data-id="${c.id}">
+      <td><div class="cli-name">${c.nome}</div><div class="cli-sub">${c.endereco||'—'}</div></td>
+      <td>${c.bairro}</td>
+      <td class="tel">${c.telefone||'—'}</td>
+      <td>${c.rating!=null?`<span class="star">★ ${c.rating.toFixed(1)}</span>`:'<span class="tel">—</span>'}</td>
+      <td><span class="badge ${s.c}"><span class="bd"></span>${s.t}</span></td>
+      <td class="tnum">${d?d.full:'<span class="tel">—</span>'}</td>
+    </tr>`;
+  }).join('') || `<tr><td colspan="6"><div class="empty">Nenhuma drogaria encontrada com esses filtros.</div></td></tr>`;
+  $$('#cli-body tr[data-id]').forEach(tr=>tr.onclick=()=>openDrawer(+tr.dataset.id));
+}
+
+/* ---------- drawer ---------- */
+function openDrawer(id){
+  editingId=id; const c=clients.find(x=>x.id===id);
+  $('#dr-bairro').textContent=c.bairro;
+  $('#dr-nome').textContent=c.nome;
+  $('#dr-addr').textContent=(c.endereco||'')+(c.horario?'  ·  '+c.horario:'');
+  const call=$('#dr-call');
+  if(c.telefone){ call.style.display='inline-flex'; call.href='tel:'+c.telefone.replace(/\D/g,''); $('#dr-call-t').textContent=c.telefone; }
+  else call.style.display='none';
+  setSit(c.situacao);
+  $('#f-ultima').value=c.ultima||''; $('#f-proxima').value=c.proxima||'';
+  $('#f-freq').value=c.freq||''; $('#f-valor').value=c.valor||'';
+  $('#f-resp').value=c.resp||''; $('#f-obs').value=c.obs||'';
+  $('#scrim').classList.add('show'); $('#drawer').classList.add('show');
+}
+let pickSit='nunca';
+function setSit(v){ pickSit=v; $$('#sit-pick .sit-opt').forEach(b=>b.classList.toggle('sel',b.dataset.v===v)); }
+function closeDrawer(){ $('#scrim').classList.remove('show'); $('#drawer').classList.remove('show'); editingId=null; }
+async function saveDrawer(){
+  if(editingId==null) return;
+  overrides[editingId] = {
+    situacao:pickSit, ultima:$('#f-ultima').value, proxima:$('#f-proxima').value,
+    freq:$('#f-freq').value, valor:$('#f-valor').value, resp:$('#f-resp').value, obs:$('#f-obs').value
+  };
+  await saveOverrides(); merge();
+  closeDrawer(); toast('Registro salvo');
+  renderDash(); renderClientes(); renderCobertura();
+}
+function toast(msg){ const t=$('#toast'); $('#toast-t').textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2000); }
+
+/* ---------- nav ---------- */
+const VIEWS={dash:{eye:'Visão geral',t:'Dashboard comercial',s:'Panorama da cobertura de drogarias e das próximas ações de campo.'},
+  clientes:{eye:'Carteira',t:'Clientes',s:'Todas as drogarias mapeadas. Toque numa linha para registrar visita, situação e valores.'},
+  cobertura:{eye:'Território',t:'Cobertura por bairro',s:'Onde a Amazon Ervas já está forte e onde há espaço para crescer em Manaus.'}};
+function go(v){
+  $$('.view').forEach(el=>el.classList.add('hide'));
+  $('#view-'+v).classList.remove('hide');
+  $$('#nav a, #mnav a').forEach(a=>a.classList.toggle('on',a.dataset.v===v));
+  const info=VIEWS[v]; $('#tb-eye').textContent=info.eye; $('#tb-title').textContent=info.t; $('#tb-sub').textContent=info.s;
+  if(v==='dash')renderDash(); if(v==='clientes')renderClientes(); if(v==='cobertura')renderCobertura();
+  window.scrollTo(0,0);
+}
+
+/* ---------- init ---------- */
+function initBairroFilter(){
+  const sel=$('#f-bairro'); sel.innerHTML='<option value="">Todos os bairros</option>'+bairros().map(b=>`<option value="${b}">${b}</option>`).join('');
+}
+function showToast(msg){
+  const toast=$('#toast'); $('#toast-t').textContent=msg;
+  toast.classList.add('show');
+  setTimeout(()=>toast.classList.remove('show'),3000);
+}
+
+async function init(){
+  await loadOverrides(); merge(); initBairroFilter();
+  $$('#nav a, #mnav a').forEach(a=>a.onclick=e=>{e.preventDefault();go(a.dataset.v);});
+  $('#q').oninput=renderClientes; $('#f-bairro').onchange=renderClientes; $('#f-sit').onchange=renderClientes;
+  $('#dr-close').onclick=closeDrawer; $('#dr-cancel').onclick=closeDrawer; $('#scrim').onclick=closeDrawer; $('#dr-save').onclick=saveDrawer;
+  $$('#sit-pick .sit-opt').forEach(b=>b.onclick=()=>setSit(b.dataset.v));
+  document.addEventListener('keydown',e=>{ if(e.key==='Escape')closeDrawer(); });
+  renderDash();
+}
+</script>
+</body>
+</html>

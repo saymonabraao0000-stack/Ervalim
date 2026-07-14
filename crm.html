@@ -710,8 +710,16 @@ const PRODUCTS_SEED = [
   {id:'1098',name:'Oleo Elétrico 30ml',description:'',characteristics:[],price:14.02,images:[],category:'Óleos',status:'ativo'}
 ];
 let products = [];
+const PRODUCTS_CATALOG_VERSION = 'v2-catalogo-100-produtos';
 
 function loadProducts(){
+  const storedVersion = localStorage.getItem('amazonervas-products-version');
+  if(storedVersion !== PRODUCTS_CATALOG_VERSION){
+    products = PRODUCTS_SEED.slice();
+    localStorage.setItem('amazonervas-products-version', PRODUCTS_CATALOG_VERSION);
+    saveProducts();
+    return;
+  }
   const stored = localStorage.getItem('amazonervas-products');
   products = stored ? JSON.parse(stored) : PRODUCTS_SEED.slice();
 }

@@ -291,6 +291,9 @@ tbody tr:last-child td{border-bottom:0}
     <a href="#" data-v="cobertura">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
       Cobertura</a>
+    <a href="#" data-v="produtos">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 11h-3.5a1.5 1.5 0 0 1 0-3H16"/></svg>
+      Produtos</a>
   </nav>
   <div class="side-foot">
     <b>Melkatéis · Polar Ice</b><br>Distribuição bairro a bairro em Manaus. Os dados que você registra ficam salvos automaticamente.
@@ -402,6 +405,15 @@ tbody tr:last-child td{border-bottom:0}
       </table>
     </div>
   </section>
+
+  <!-- PRODUTOS -->
+  <section class="view hide" id="view-produtos">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+      <h2 style="font-size:20px;font-weight:700">Catálogo de Produtos</h2>
+      <button style="background:#3AA76B;color:#fff;border:none;padding:10px 18px;border-radius:8px;cursor:pointer;font-weight:600" onclick="openProductForm()">+ Novo Produto</button>
+    </div>
+    <div id="products-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;margin-top:20px"></div>
+  </section>
 </div>
 
 <!-- DRAWER -->
@@ -444,6 +456,28 @@ tbody tr:last-child td{border-bottom:0}
     <button class="btn btn-ghost" id="dr-cancel">Cancelar</button>
   </div>
 </aside>
+
+<!-- MODAL PRODUTOS -->
+<div id="product-modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:12px;padding:28px;width:90%;max-width:500px;max-height:90vh;overflow-y:auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+      <h3 id="pm-title" style="font-size:18px;font-weight:700">Novo Produto</h3>
+      <button onclick="closeProductModal()" style="background:none;border:none;font-size:24px;cursor:pointer">×</button>
+    </div>
+    <form id="product-form" onsubmit="handleProductSubmit(event)" style="display:grid;gap:14px">
+      <div><label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px">Nome</label><input type="text" id="pf-name" placeholder="Ex: Polar Ice" required style="width:100%;padding:10px;border:1px solid #ddd;border-radius:6px"></div>
+      <div><label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px">Descrição</label><textarea id="pf-desc" placeholder="Ex: Gel de massagem relaxante" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:6px;min-height:80px"></textarea></div>
+      <div><label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px">Características (separadas por vírgula)</label><input type="text" id="pf-chars" placeholder="Ex: 250g, Gel, Refrescante" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:6px"></div>
+      <div><label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px">Preço (R$)</label><input type="number" id="pf-price" placeholder="0.00" step="0.01" min="0" required style="width:100%;padding:10px;border:1px solid #ddd;border-radius:6px"></div>
+      <div><label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px">Foto (URL)</label><input type="url" id="pf-image" placeholder="https://..." style="width:100%;padding:10px;border:1px solid #ddd;border-radius:6px"></div>
+      <div><label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px">Categoria</label><input type="text" id="pf-category" placeholder="Ex: Géis, Chás..." style="width:100%;padding:10px;border:1px solid #ddd;border-radius:6px"></div>
+      <div style="display:flex;gap:10px;margin-top:10px">
+        <button type="submit" style="flex:1;background:#3AA76B;color:#fff;border:none;padding:10px;border-radius:6px;font-weight:600;cursor:pointer">Salvar</button>
+        <button type="button" onclick="closeProductModal()" style="flex:1;background:#eee;border:none;padding:10px;border-radius:6px;font-weight:600;cursor:pointer">Cancelar</button>
+      </div>
+    </form>
+  </div>
+</div>
 
 <div class="toast" id="toast"><span class="bd"></span><span id="toast-t">Salvo</span></div>
 
@@ -507,6 +541,105 @@ function saveOverrides(){
 }
 function merge(){
   clients = SEED.map(s=>{ const o = overrides[s.id]||{}; return Object.assign({situacao:'nunca',ultima:'',proxima:'',freq:'',valor:'',resp:'',obs:''}, s, o); });
+}
+
+/* ---------- products ---------- */
+const PRODUCTS_SEED = [
+  {id:'1',name:'Polar Ice',description:'Gel de massagem relaxante-refrescante-suavizante',characteristics:['250g','Gel','Refrescante'],price:69.90,image:'https://amazonervas.com.br/wp-content/uploads/2024/05/Polar-ice-_0000_Agrupar-5-copiar-1.png',category:'Géis',status:'ativo'},
+  {id:'2',name:'Magnésio Quelato',description:'Suplemento de magnésio de alta absorção',characteristics:['60 cápsulas','500mg','Quelato'],price:49.90,image:'',category:'Suplementos',status:'ativo'}
+];
+let products = [];
+
+function loadProducts(){
+  const stored = localStorage.getItem('amazonervas-products');
+  products = stored ? JSON.parse(stored) : PRODUCTS_SEED.slice();
+}
+
+function saveProducts(){
+  try { localStorage.setItem('amazonervas-products', JSON.stringify(products)); } catch(e) { console.error('save products error:', e); }
+}
+
+function renderProducts(){
+  const grid = $('#products-grid');
+  grid.innerHTML = products.map(p=>`
+    <div style="border:1px solid #ddd;border-radius:8px;overflow:hidden;background:#fff">
+      ${p.image ? `<img src="${p.image}" style="width:100%;height:150px;object-fit:cover">` : '<div style="width:100%;height:150px;background:#f0f0f0;display:flex;align-items:center;justify-content:center;color:#999">Sem foto</div>'}
+      <div style="padding:12px">
+        <h4 style="font-size:14px;font-weight:600;margin-bottom:4px">${p.name}</h4>
+        <p style="font-size:12px;color:#666;margin-bottom:8px">${p.description}</p>
+        <div style="font-size:16px;font-weight:700;color:#3AA76B;margin-bottom:8px">R$ ${p.price.toFixed(2)}</div>
+        <div style="display:flex;gap:6px">
+          <button onclick="editProduct('${p.id}')" style="flex:1;padding:6px;background:#3AA76B;color:#fff;border:none;border-radius:4px;font-size:12px;cursor:pointer;font-weight:600">Editar</button>
+          <button onclick="deleteProduct('${p.id}')" style="flex:1;padding:6px;background:#ddd;border:none;border-radius:4px;font-size:12px;cursor:pointer;font-weight:600">Deletar</button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+let editingProductId = null;
+
+function openProductForm(id=null){
+  editingProductId = id;
+  const modal = $('#product-modal');
+  if(id){
+    const p = products.find(x=>x.id===id);
+    $('#pm-title').textContent = 'Editar Produto';
+    $('#pf-name').value = p.name;
+    $('#pf-desc').value = p.description;
+    $('#pf-chars').value = p.characteristics.join(', ');
+    $('#pf-price').value = p.price;
+    $('#pf-image').value = p.image;
+    $('#pf-category').value = p.category;
+  } else {
+    $('#pm-title').textContent = 'Novo Produto';
+    $('#product-form').reset();
+  }
+  modal.style.display = 'flex';
+}
+
+function closeProductModal(){
+  $('#product-modal').style.display = 'none';
+  editingProductId = null;
+}
+
+function handleProductSubmit(e){
+  e.preventDefault();
+  const newProduct = {
+    id: editingProductId || Date.now().toString(),
+    name: $('#pf-name').value,
+    description: $('#pf-desc').value,
+    characteristics: $('#pf-chars').value.split(',').map(s=>s.trim()),
+    price: parseFloat($('#pf-price').value),
+    image: $('#pf-image').value,
+    category: $('#pf-category').value,
+    status: 'ativo'
+  };
+
+  if(editingProductId){
+    const idx = products.findIndex(x=>x.id===editingProductId);
+    products[idx] = newProduct;
+  } else {
+    products.push(newProduct);
+  }
+
+  saveProducts();
+  renderProducts();
+  closeProductModal();
+  showToast(editingProductId ? 'Produto atualizado' : 'Produto adicionado');
+}
+
+function editProduct(id){
+  openProductForm(id);
+}
+
+function deleteProduct(id){
+  if(confirm('Deletar este produto?')){
+    products = products.filter(p=>p.id!==id);
+    saveProducts();
+    renderProducts();
+    showToast('Produto removido');
+  }
 }
 
 /* ---------- helpers ---------- */
@@ -665,13 +798,14 @@ function toast(msg){ const t=$('#toast'); $('#toast-t').textContent=msg; t.class
 /* ---------- nav ---------- */
 const VIEWS={dash:{eye:'Visão geral',t:'Dashboard comercial',s:'Panorama da cobertura de drogarias e das próximas ações de campo.'},
   clientes:{eye:'Carteira',t:'Clientes',s:'Todas as drogarias mapeadas. Toque numa linha para registrar visita, situação e valores.'},
-  cobertura:{eye:'Território',t:'Cobertura por bairro',s:'Onde a Amazon Ervas já está forte e onde há espaço para crescer em Manaus.'}};
+  cobertura:{eye:'Território',t:'Cobertura por bairro',s:'Onde a Amazon Ervas já está forte e onde há espaço para crescer em Manaus.'},
+  produtos:{eye:'Catálogo',t:'Produtos',s:'Gerencie o catálogo de produtos Amazon Ervas com preços, fotos e descrições.'}};
 function go(v){
   $$('.view').forEach(el=>el.classList.add('hide'));
   $('#view-'+v).classList.remove('hide');
   $$('#nav a, #mnav a').forEach(a=>a.classList.toggle('on',a.dataset.v===v));
   const info=VIEWS[v]; $('#tb-eye').textContent=info.eye; $('#tb-title').textContent=info.t; $('#tb-sub').textContent=info.s;
-  if(v==='dash')renderDash(); if(v==='clientes')renderClientes(); if(v==='cobertura')renderCobertura();
+  if(v==='dash')renderDash(); if(v==='clientes')renderClientes(); if(v==='cobertura')renderCobertura(); if(v==='produtos')renderProducts();
   window.scrollTo(0,0);
 }
 
@@ -694,7 +828,7 @@ if('serviceWorker' in navigator){
 }
 
 async function init(){
-  await loadOverrides(); merge(); initBairroFilter();
+  await loadOverrides(); merge(); loadProducts(); initBairroFilter();
   $$('#nav a, #mnav a').forEach(a=>a.onclick=e=>{e.preventDefault();go(a.dataset.v);});
   $('#q').oninput=renderClientes; $('#f-bairro').onchange=renderClientes; $('#f-sit').onchange=renderClientes;
   $('#dr-close').onclick=closeDrawer; $('#dr-cancel').onclick=closeDrawer; $('#scrim').onclick=closeDrawer; $('#dr-save').onclick=saveDrawer;

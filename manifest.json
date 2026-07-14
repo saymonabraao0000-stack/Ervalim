@@ -1,0 +1,33 @@
+{
+  "name": "CRM Comercial Ervalim",
+  "short_name": "CRM Ervalim",
+  "description": "Sistema de gestão de relacionamento com farmácias em Manaus",
+  "start_url": "/crm.html",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0C231A",
+  "theme_color": "#3AA76B",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshot-540.png",
+      "sizes": "540x720",
+      "type": "image/png",
+      "form_factor": "narrow"
+    }
+  ]
+}

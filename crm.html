@@ -577,10 +577,6 @@ function handleLogout(){
   location.reload();
 }
 
-if(localStorage.getItem(AUTH_KEY) === '1'){
-  enterApp();
-}
-
 // Enter key support
 document.addEventListener('keypress', (e) => {
   if(e.key === 'Enter' && !isAuthenticated && document.getElementById('login-pwd') === document.activeElement) {
@@ -1235,6 +1231,10 @@ async function init(){
   $$('#sit-pick .sit-opt').forEach(b=>b.onclick=()=>setSit(b.dataset.v));
   document.addEventListener('keydown',e=>{ if(e.key==='Escape')closeDrawer(); });
   renderDash();
+}
+
+if(localStorage.getItem(AUTH_KEY) === '1'){
+  enterApp();
 }
 </script>
 </body>

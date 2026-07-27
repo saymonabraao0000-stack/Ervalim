@@ -545,6 +545,17 @@ tbody tr:last-child td{border-bottom:0}
     </div>
     <div class="fld"><label>Responsável</label><input type="text" id="f-resp" placeholder="Vendedor(a) que atende"></div>
     <div class="fld"><label>Produtos vendidos / observações</label><textarea id="f-obs" placeholder="Ex.: leva Melkatéis toda semana; interessado na linha Polar Ice…"></textarea></div>
+    <div class="fld" style="margin-top:8px">
+      <label>Histórico de vendas</label>
+      <div id="historico-list" style="margin-bottom:8px"></div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <input type="date" id="h-data" style="flex:1;min-width:100px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;font-size:13px;background:var(--white)">
+        <input type="text" id="h-produtos" placeholder="Produtos" style="flex:2;min-width:120px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;font-size:13px;background:var(--white)">
+        <input type="number" id="h-valor" placeholder="R$" style="flex:0 0 80px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;font-size:13px;background:var(--white)" step="1" min="0">
+        <button onclick="addHistoricoEntry()" style="padding:8px 14px;background:var(--leaf);color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:13px">+</button>
+      </div>
+      <input type="text" id="h-obs" placeholder="Observação da venda (opcional)" style="width:100%;margin-top:6px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;font-size:13px;background:var(--white)">
+    </div>
   </div>
   <div class="dr-foot">
     <button class="btn btn-primary" id="dr-save">Salvar registro</button>
@@ -1029,7 +1040,7 @@ function saveOverrides(){
 }
 function merge(){
   const ALL = [...SEED, ...MERCADOS_SEED];
-  clients = ALL.map(s=>{ const o = overrides[s.id]||{}; return Object.assign({situacao:'nunca',ultima:'',proxima:'',freq:'',valor:'',resp:'',obs:''}, s, o); });
+  clients = ALL.map(s=>{ const o = overrides[s.id]||{}; return Object.assign({situacao:'nunca',ultima:'',proxima:'',freq:'',valor:'',resp:'',obs:'',historico:[]}, s, o); });
 }
 
 /* ---------- products ---------- */
@@ -1725,6 +1736,7 @@ function openDrawer(id){
   $('#f-ultima').value=c.ultima||''; $('#f-proxima').value=c.proxima||'';
   $('#f-freq').value=c.freq||''; $('#f-valor').value=c.valor||'';
   $('#f-resp').value=c.resp||''; $('#f-obs').value=c.obs||'';
+  renderHistorico();
   $('#scrim').classList.add('show'); $('#drawer').classList.add('show');
 }
 let pickSit='nunca';
@@ -1732,15 +1744,74 @@ function setSit(v){ pickSit=v; $$('#sit-pick .sit-opt').forEach(b=>b.classList.t
 function closeDrawer(){ $('#scrim').classList.remove('show'); $('#drawer').classList.remove('show'); editingId=null; }
 async function saveDrawer(){
   if(editingId==null) return;
+  const prev = overrides[editingId] || {};
   overrides[editingId] = {
     situacao:pickSit, ultima:$('#f-ultima').value, proxima:$('#f-proxima').value,
-    freq:$('#f-freq').value, valor:$('#f-valor').value, resp:$('#f-resp').value, obs:$('#f-obs').value
+    freq:$('#f-freq').value, valor:$('#f-valor').value, resp:$('#f-resp').value, obs:$('#f-obs').value,
+    historico: prev.historico || []
   };
   await saveOverrides(); merge();
   closeDrawer(); toast('Registro salvo');
   renderDash(); renderClientes(); renderCobertura();
 }
 function toast(msg){ const t=$('#toast'); $('#toast-t').textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2000); }
+
+/* ---------- historico ---------- */
+function renderHistorico(){
+  if(editingId==null) return;
+  const c = clients.find(x=>x.id===editingId);
+  if(!c) return;
+  const hist = c.historico || [];
+  const list = $('#historico-list');
+  if(!hist.length){
+    list.innerHTML = '<div style="font-size:12px;color:#999;padding:8px 0">Nenhum registro ainda</div>';
+    return;
+  }
+  list.innerHTML = [...hist].reverse().map((h,i)=>{
+    const realIdx = hist.length - 1 - i;
+    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;background:#f5f5f5;border-radius:6px;margin-bottom:4px;font-size:12px">
+      <div style="flex:1;min-width:0">
+        ${h.data ? '<strong>'+h.data.split('-').reverse().join('/')+'</strong>' : ''}
+        ${h.produtos ? ' <span style="color:var(--ink-soft)">·</span> '+h.produtos : ''}
+        ${h.valor ? ' <span style="color:var(--ink-soft)">·</span> <strong style="color:var(--leaf)">R$ '+parseFloat(h.valor).toFixed(2)+'</strong>' : ''}
+        ${h.robs ? '<br><span style="color:#999;font-size:11px">'+h.robs+'</span>' : ''}
+      </div>
+      <button onclick="deleteHistoricoEntry('${realIdx}')" style="background:none;border:none;color:#d32f2f;cursor:pointer;font-size:16px;padding:0 4px;flex-shrink:0">×</button>
+    </div>`;
+  }).join('');
+}
+
+function addHistoricoEntry(){
+  if(editingId==null) return;
+  const data = $('#h-data').value;
+  const produtos = $('#h-produtos').value.trim();
+  const valor = $('#h-valor').value;
+  const obs = $('#h-obs').value.trim();
+  if(!data && !produtos) { showToast('Preencha ao menos a data ou o produto'); return; }
+  const entry = {data, produtos, valor, obs};
+  const existing = overrides[editingId] || {};
+  const hist = existing.historico || [];
+  hist.push(entry);
+  existing.historico = hist;
+  overrides[editingId] = Object.assign({}, existing);
+  saveOverrides(); merge();
+  renderHistorico();
+  $('#h-data').value=''; $('#h-produtos').value=''; $('#h-valor').value=''; $('#h-obs').value='';
+  showToast('Venda registrada');
+}
+
+function deleteHistoricoEntry(idx){
+  if(editingId==null) return;
+  const existing = overrides[editingId] || {};
+  const hist = existing.historico || [];
+  if(idx<0||idx>=hist.length) return;
+  hist.splice(idx, 1);
+  existing.historico = hist;
+  overrides[editingId] = Object.assign({}, existing);
+  saveOverrides(); merge();
+  renderHistorico();
+  showToast('Registro removido');
+}
 
 /* ---------- nav ---------- */
 // v2.1: Added pricing tables

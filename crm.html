@@ -176,8 +176,8 @@ button{font-family:inherit;cursor:pointer}
 .empty svg{width:34px;height:34px;opacity:.4;margin-bottom:8px}
 
 /* ---------- MAP ---------- */
-.crm-map{height:420px;border-radius:12px;overflow:hidden;background:var(--paper);z-index:1}
-.crm-map-full{height:480px;border-radius:12px;overflow:hidden;background:var(--paper);z-index:1}
+.crm-map{height:440px;border-radius:12px;overflow:hidden;background:var(--paper);z-index:1}
+.crm-map-full{height:580px;border-radius:12px;overflow:hidden;background:var(--paper);z-index:1}
 .leaflet-container{font-family:'Inter',system-ui,sans-serif}
 .map-legend{background:var(--white);padding:10px 14px;border-radius:10px;box-shadow:var(--shadow);font-size:12px;line-height:1.6}
 .map-legend b{display:block;font-size:11px;color:var(--ink-soft);margin-bottom:3px;font-weight:600}
@@ -335,8 +335,8 @@ tbody tr:last-child td{border-bottom:0}
   .count-pill{font-size:12px}
   .toolbar button{padding:8px 14px!important;font-size:13px!important}
   /* Map */
-  .crm-map{height:300px}
-  .crm-map-full{height:360px}
+  .crm-map{height:280px}
+  .crm-map-full{height:380px}
   /* Login */
   #login-screen .login-container{padding:28px 22px;margin:16px}
   .login-container h2{font-size:20px}
@@ -1625,7 +1625,7 @@ function geoLoaded(){ geoCallbacks.forEach(cb=>cb(geoData)); geoCallbacks=[]; }
 function getGeoBairro(crmBairro){ return BAIRRO_MAP[crmBairro]||crmBairro.toUpperCase(); }
 
 function makeMap(elId, full){
-  const map = L.map(elId,{zoomControl:false,attributionControl:false}).setView([-3.119,-60.0217],11);
+  const map = L.map(elId,{zoomControl:false,attributionControl:false}).setView([-3.119,-60.0217],12);
   L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{
     maxZoom:18,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>'
   }).addTo(map);
@@ -1719,6 +1719,7 @@ function renderCanopyMap(containerId, full){
   onGeoLoaded(data=>{
     const layer = L.geoJSON(data,{style:styleBairro}).addTo(map);
     if(containerId==='dash-map') dashLayer=layer; else cobLayer=layer;
+    map.fitBounds(layer.getBounds(),{padding:[30,30]});
     updateMapColors(map, layer);
     L.control.attribution({position:'bottomright',prefix:'Amazon Ervas · Dados: IGEOTECNOLOGIA'}).addTo(map);
     const LegendControl = L.Control.extend({onAdd:function(){

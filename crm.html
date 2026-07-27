@@ -57,13 +57,8 @@ button{font-family:inherit;cursor:pointer}
   padding:22px 16px;z-index:20;
 }
 .main{margin-left:236px}
-.brand{display:flex;align-items:center;gap:11px;padding:6px 8px 22px}
-.brand .mark{width:38px;height:38px;border-radius:11px;background:
-  radial-gradient(circle at 32% 30%,var(--leaf),var(--river) 70%);
-  display:grid;place-items:center;flex-shrink:0;box-shadow:inset 0 0 0 1px rgba(255,255,255,.08)}
-.brand .mark svg{width:22px;height:22px}
-.brand b{font-family:'Bricolage Grotesque';font-size:16px;color:#fff;font-weight:700;line-height:1;display:block}
-.brand span{font-size:11px;color:#7FA090;letter-spacing:.04em;text-transform:uppercase}
+.brand{display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:6px 8px 22px}
+.brand img{display:block}
 .nav{display:flex;flex-direction:column;gap:3px;margin-top:6px}
 .nav a{
   display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:10px;
@@ -340,12 +335,8 @@ tbody tr:last-child td{border-bottom:0}
 <!-- SIDEBAR -->
 <aside class="side">
   <div class="brand">
-    <div class="mark">
-      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M11 20A7 7 0 0 1 4 13c0-4 3-7 7-9 4 2 7 5 7 9a7 7 0 0 1-7 7Z"/><path d="M11 20V9"/><path d="M11 13l3-3"/><path d="M11 15l-2.5-2.5"/>
-      </svg>
-    </div>
-    <div><b>Amazon Ervas</b><span>CRM Comercial</span></div>
+    <img src="logo-branco.png" alt="Amazon Ervas" style="width:100%;height:auto;max-width:180px">
+    <span style="font-size:11px;color:#7FA090;letter-spacing:.04em;text-transform:uppercase;display:block;margin-top:2px">CRM Comercial</span>
   </div>
   <nav class="nav" id="nav">
     <a href="#" data-v="dash" class="on">

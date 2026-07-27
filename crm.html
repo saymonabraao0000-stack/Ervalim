@@ -15,6 +15,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 <style>
 :root{
   --canopy:#0C231A;      /* dossel — quase preto esverdeado */
@@ -320,7 +322,7 @@ tbody tr:last-child td{border-bottom:0}
       <h1 id="tb-title">Dashboard comercial</h1>
       <div class="sub" id="tb-sub">Panorama da cobertura de drogarias e das próximas ações de campo.</div>
     </div>
-    <div class="saved"><span class="dot"></span> Salvo automaticamente</div>
+    <div class="saved" id="sync-status"><span class="dot"></span> Salvo automaticamente</div>
   </div>
 
   <!-- DASHBOARD -->
@@ -790,6 +792,141 @@ const MERCADOS_SEED = [
   {"id": 546, "tipo": "mercado", "categoria": "pequeno", "bairro": "Santa Etelvina / Col. Ant. Aleixo", "nome": "Mercadinho e Panificadora São Francisco", "endereco": "Rua Nova Esperança, 121", "telefone": ""},
   {"id": 547, "tipo": "mercado", "categoria": "pequeno", "bairro": "Puraquequara", "nome": "Mercadinho do Luiz", "endereco": "Rua 5, 304", "telefone": ""}
 ];
+/* ---------- Firebase ---------- */
+// ⚠️ SUBSTITUA pelos dados do seu projeto Firebase:
+// 1. Acesse https://console.firebase.google.com
+// 2. Crie um projeto → Ative Firestore (modo produção)
+// 3. Registre um app web → Copie o config abaixo
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyBMJR9Yql32moAGiRraErG_DP11GyeT_3Q",
+  authDomain: "crm---vendas--ervas.firebaseapp.com",
+  projectId: "crm---vendas--ervas",
+  storageBucket: "crm---vendas--ervas.firebasestorage.app",
+  messagingSenderId: "692003215902",
+  appId: "1:692003215902:web:d50ef40b45f9792c50ac0f"
+};
+
+let db = null;
+let fbReady = false;
+let fbUnsubscribes = [];
+
+function initFirebase(){
+  try {
+    if(!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+    db = firebase.firestore();
+    db.enablePersistence({synchronizeTabs:true}).catch(()=>{});
+    fbReady = true;
+    const st = document.getElementById('sync-status');
+    if(st) st.innerHTML = '<span class="dot" style="background:#4CAF50"></span> Sincronizado na nuvem';
+    console.log('✓ Firebase conectado');
+    migrateLocalStorageToFirebase();
+    listenFirebaseChanges();
+  } catch(e){
+    console.log('Firebase indisponível, usando localStorage');
+    fbReady = false;
+  }
+}
+
+/* ---------- Firestore helpers ---------- */
+async function fbSet(col, id, data){
+  if(!fbReady) return;
+  try { await db.collection(col).doc(id).set(data); } catch(e){ console.error('Firebase save error:', e); }
+}
+
+async function fbGet(col, id){
+  if(!fbReady) return null;
+  try { const snap = await db.collection(col).doc(id).get(); return snap.exists ? snap.data() : null; }
+  catch(e){ console.error('Firebase load error:', e); return null; }
+}
+
+/* ---------- Real-time listeners ---------- */
+function listenFirebaseChanges(){
+  if(!fbReady) return;
+  // Clients
+  fbUnsubscribes.push(db.collection('crm').doc('overrides').onSnapshot(snap=>{
+    if(snap.exists && snap.data().lastWrite !== (window.__lastLocalWrite || 0)){
+      const fb = snap.data().overrides || {};
+      const changed = JSON.stringify(fb) !== JSON.stringify(overrides);
+      if(changed){
+        overrides = fb;
+        localStorage.setItem(KEY, JSON.stringify(overrides));
+        merge();
+        if(typeof renderDash==='function'){ renderDash(); renderClientes(); renderCobertura(); }
+      }
+    }
+  }, err=>console.log('Firebase listen clients:', err)));
+  // Products
+  fbUnsubscribes.push(db.collection('crm').doc('products').onSnapshot(snap=>{
+    if(snap.exists && snap.data().lastWrite !== (window.__lastProductWrite || 0)){
+      const fb = snap.data().products || [];
+      if(JSON.stringify(fb) !== JSON.stringify(products)){
+        products = fb;
+        localStorage.setItem('amazonervas-products', JSON.stringify(products));
+        localStorage.setItem('amazonervas-products-version', PRODUCTS_CATALOG_VERSION);
+        if(typeof renderProducts==='function') renderProducts();
+      }
+    }
+  }, err=>console.log('Firebase listen products:', err)));
+  // Price tables
+  fbUnsubscribes.push(db.collection('crm').doc('prices').onSnapshot(snap=>{
+    if(snap.exists && snap.data().lastWrite !== (window.__lastPriceWrite || 0)){
+      const fb = snap.data().tables || [];
+      const sel = snap.data().selected || '';
+      let changed = false;
+      if(JSON.stringify(fb) !== JSON.stringify(priceTables)){
+        priceTables = fb;
+        localStorage.setItem('amazonervas-price-tables', JSON.stringify(priceTables));
+        changed = true;
+      }
+      if(sel && sel !== localStorage.getItem('amazonervas-selected-price-table')){
+        localStorage.setItem('amazonervas-selected-price-table', sel);
+        changed = true;
+      }
+      if(changed && typeof renderPrices==='function') renderPrices();
+    }
+  }, err=>console.log('Firebase listen prices:', err)));
+}
+
+/* ---------- Migration from localStorage ---------- */
+async function migrateLocalStorageToFirebase(){
+  if(!fbReady) return;
+  try {
+    // Clients
+    const localOverrides = localStorage.getItem(KEY);
+    if(localOverrides){
+      const parsed = JSON.parse(localOverrides);
+      if(Object.keys(parsed).length > 0){
+        const existing = await fbGet('crm', 'overrides');
+        if(!existing || !existing.lastWrite){
+          await fbSet('crm', 'overrides', {overrides: parsed, lastWrite: Date.now()});
+          console.log('✓ Clientes migrados para Firebase');
+        }
+      }
+    }
+    // Products
+    const localProducts = localStorage.getItem('amazonervas-products');
+    if(localProducts){
+      const parsed = JSON.parse(localProducts);
+      const existing = await fbGet('crm', 'products');
+      if(!existing || !existing.lastWrite){
+        await fbSet('crm', 'products', {products: parsed, lastWrite: Date.now()});
+        console.log('✓ Produtos migrados para Firebase');
+      }
+    }
+    // Price tables
+    const localPrices = localStorage.getItem('amazonervas-price-tables');
+    const selPrice = localStorage.getItem('amazonervas-selected-price-table') || '';
+    if(localPrices){
+      const parsed = JSON.parse(localPrices);
+      const existing = await fbGet('crm', 'prices');
+      if(!existing || !existing.lastWrite){
+        await fbSet('crm', 'prices', {tables: parsed, selected: selPrice, lastWrite: Date.now()});
+        console.log('✓ Tabelas de preço migradas para Firebase');
+      }
+    }
+  } catch(e){ console.log('Migration error (ignored):', e); }
+}
+
 const KEY = 'amazonervas-crm-v1';
 const SIT = {
   ativo:{t:'Ativo',c:'b-ativo'}, inativo:{t:'Inativo',c:'b-inativo'},
@@ -814,6 +951,8 @@ function loadOverrides(){
 function saveOverrides(){
   try {
     localStorage.setItem(KEY, JSON.stringify(overrides));
+    window.__lastLocalWrite = Date.now();
+    fbSet('crm', 'overrides', {overrides, lastWrite: window.__lastLocalWrite});
   } catch(e) {
     console.error('save error:', e);
     showToast('Erro ao salvar');
@@ -943,7 +1082,11 @@ function loadProducts(){
 }
 
 function saveProducts(){
-  try { localStorage.setItem('amazonervas-products', JSON.stringify(products)); } catch(e) { console.error('save products error:', e); }
+  try {
+    localStorage.setItem('amazonervas-products', JSON.stringify(products));
+    window.__lastProductWrite = Date.now();
+    fbSet('crm', 'products', {products, lastWrite: window.__lastProductWrite});
+  } catch(e) { console.error('save products error:', e); }
 }
 
 function renderProducts(){
@@ -1093,6 +1236,9 @@ function loadPriceTables(){
 
 function savePriceTables(){
   localStorage.setItem('amazonervas-price-tables', JSON.stringify(priceTables));
+  const sel = localStorage.getItem('amazonervas-selected-price-table') || '';
+  window.__lastPriceWrite = Date.now();
+  fbSet('crm', 'prices', {tables: priceTables, selected: sel, lastWrite: window.__lastPriceWrite});
 }
 
 function renderPrices(){
@@ -1163,6 +1309,8 @@ function deletePriceTable(id){
 
 function selectPriceTable(id){
   localStorage.setItem('amazonervas-selected-price-table', id);
+  window.__lastPriceWrite = Date.now();
+  fbSet('crm', 'prices', {tables: priceTables, selected: id, lastWrite: window.__lastPriceWrite});
   renderPrices();
   showToast('Tabela de preços ativa alterada');
 }
@@ -1446,6 +1594,7 @@ async function init(){
   $$('#sit-pick .sit-opt').forEach(b=>b.onclick=()=>setSit(b.dataset.v));
   document.addEventListener('keydown',e=>{ if(e.key==='Escape')closeDrawer(); });
   renderDash();
+  setTimeout(initFirebase, 500);
 }
 
 if(localStorage.getItem(AUTH_KEY) === '1'){

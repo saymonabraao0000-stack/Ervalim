@@ -64,7 +64,7 @@ button{font-family:inherit;cursor:pointer}
 .main.expand{margin-left:0}
 
 .menu-toggle{
-  position:fixed;top:18px;left:18px;z-index:25;
+  position:fixed;top:18px;left:12px;z-index:30;
   width:36px;height:36px;border:0;border-radius:10px;
   background:var(--canopy);color:#CFE0D6;
   display:none;align-items:center;justify-content:center;
@@ -73,21 +73,35 @@ button{font-family:inherit;cursor:pointer}
 .menu-toggle:hover{background:var(--forest)}
 .menu-toggle svg{width:20px;height:20px}
 .menu-toggle.show{display:flex}
-.brand{display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:6px 8px 22px}
-.brand img{display:block}
-.nav{display:flex;flex-direction:column;gap:3px;margin-top:6px}
-.nav a{
-  display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:10px;
+
+.nav-group{margin-bottom:2px}
+.nav-group .group-hdr{
+  display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;
+  color:#96B2A5;text-decoration:none;font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+  cursor:pointer;transition:background .15s,color .15s;user-select:none;
+}
+.nav-group .group-hdr:hover{background:rgba(255,255,255,.04);color:#B4CabB}
+.nav-group .group-hdr .chev{width:14px;height:14px;margin-left:auto;transition:transform .2s;opacity:.5}
+.nav-group .group-hdr .chev.open{transform:rotate(90deg)}
+.nav-group .group-body{display:flex;flex-direction:column;gap:2px}
+.nav-group .group-body.hide{display:none}
+.group-body>a{
+  display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;
   color:#B4CabB;text-decoration:none;font-size:14px;font-weight:500;
   transition:background .15s,color .15s;
 }
+.group-body>a:hover{background:rgba(255,255,255,.05);color:#EAF3ED}
+.group-body>a.on{background:rgba(200,169,81,.15);color:#C8A951}
+
+.sub-group{margin-left:0}
+.sub-group .group-hdr{font-size:14px;font-weight:500;letter-spacing:0;text-transform:none;padding:10px 12px;color:#B4CabB}
+.sub-group .group-hdr.on,.sub-group .group-hdr.on:hover{color:#C8A951}
+.sub-group .group-hdr .chev{width:16px;height:16px;opacity:.5}
+.sub-group .group-body{display:flex;flex-direction:column;gap:2px;padding-left:8px}
+.brand{display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:6px 8px 22px}
+.brand img{display:block}
+.nav{display:flex;flex-direction:column;gap:3px;margin-top:6px}
 .nav a svg{width:18px;height:18px;opacity:.85}
-.nav a:hover{background:rgba(255,255,255,.05);color:#EAF3ED}
-.nav a.on{background:linear-gradient(90deg,rgba(58,167,107,.22),rgba(58,167,107,.05));color:#fff}
-.nav a.on svg{opacity:1;color:var(--gold)}
-.nav a.sub{padding-left:38px;font-size:13px;font-weight:400;color:#8DA89A;margin-top:-3px}
-.nav a.sub svg{width:14px;height:14px;opacity:.6}
-.nav a.sub.on{background:rgba(58,167,107,.08);color:#b8d4c4}
 .side-foot{margin-top:auto;padding:14px 10px 4px;border-top:1px solid rgba(255,255,255,.07);font-size:11px;color:#6E8A7B;line-height:1.5}
 .side-foot b{color:#9FBBAC;font-weight:600}
 
@@ -259,7 +273,7 @@ tbody tr:last-child td{border-bottom:0}
 .mtabs{display:none}
 @media(max-width:900px){
   body{flex-direction:column;padding-bottom:calc(64px + env(safe-area-inset-bottom,0px));overflow-x:hidden}
-  .side{display:none}
+  .side,.menu-toggle{display:none!important}
   .main{margin-left:0}
   .mtabs{display:flex;position:fixed;bottom:0;left:0;right:0;z-index:30;background:var(--canopy);padding:6px 4px;gap:2px;border-top:1px solid rgba(255,255,255,.1);height:60px}
   .mtabs a{flex:1;text-align:center;padding:10px 4px;border-radius:8px;color:#B4CABB;text-decoration:none;font-size:11px;font-weight:600;white-space:nowrap;display:flex;flex-direction:column;align-items:center;gap:3px}
@@ -337,10 +351,6 @@ tbody tr:last-child td{border-bottom:0}
 </head>
 <body>
 
-<button class="menu-toggle" id="menu-toggle" onclick="toggleSidebar()" aria-label="Menu">
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-</button>
-
 <div id="login-screen">
   <div class="login-container">
     <h2>CRM Comercial</h2>
@@ -353,30 +363,61 @@ tbody tr:last-child td{border-bottom:0}
 </div>
 
 <!-- SIDEBAR -->
+<button class="menu-toggle" id="menu-toggle" onclick="toggleSidebar()" aria-label="Menu">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+
 <aside class="side hidden">
   <div class="brand">
     <img src="logo-branco.png" alt="Amazon Ervas" style="width:100%;height:auto;max-width:180px">
     <span style="font-size:11px;color:#7FA090;letter-spacing:.04em;text-transform:uppercase;display:block;margin-top:2px">CRM Comercial</span>
   </div>
   <nav class="nav" id="nav">
-    <a href="#" data-v="dash" class="on">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
-      Dashboard</a>
-    <a href="#" data-v="clientes">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-      Clientes</a>
-    <a href="#" data-v="historico" class="sub">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-      Histórico</a>
-    <a href="#" data-v="cobertura">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
-      Cobertura</a>
-    <a href="#" data-v="produtos">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 11h-3.5a1.5 1.5 0 0 1 0-3H16"/></svg>
-      Produtos</a>
-    <a href="#" data-v="precos">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-      Preços</a>
+    <!-- grupo CRM -->
+    <div class="nav-group">
+      <a class="group-hdr" onclick="toggleGroup(this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;opacity:.65"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
+        CRM
+        <svg class="chev open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+      </a>
+      <div class="group-body">
+        <a href="#" data-v="dash">Dashboard</a>
+        <!-- sub-grupo Clientes -->
+        <div class="nav-group sub-group">
+          <a class="group-hdr" onclick="toggleGroup(this)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px;opacity:.85"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            Clientes
+            <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </a>
+          <div class="group-body hide">
+            <a href="#" data-v="clientes">Farmácias</a>
+            <a href="#" data-v="historico" class="sub">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;opacity:.7"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              Histórico
+            </a>
+          </div>
+        </div>
+        <a href="#" data-v="cobertura">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px;opacity:.85"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
+          Cobertura</a>
+      </div>
+    </div>
+    <!-- grupo Catálogo -->
+    <div class="nav-group">
+      <a class="group-hdr" onclick="toggleGroup(this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;opacity:.65"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 11h-3.5a1.5 1.5 0 0 1 0-3H16"/></svg>
+        Catálogo
+        <svg class="chev open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+      </a>
+      <div class="group-body">
+        <a href="#" data-v="produtos">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px;opacity:.85"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 11h-3.5a1.5 1.5 0 0 1 0-3H16"/></svg>
+          Produtos</a>
+        <a href="#" data-v="precos">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px;opacity:.85"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          Preços</a>
+      </div>
+    </div>
   </nav>
   <div class="side-foot">
     Os dados que você registra ficam salvos automaticamente.
@@ -1883,15 +1924,23 @@ function toggleSidebar(){
   const side=document.querySelector('.side'), main=document.querySelector('.main'), btn=document.getElementById('menu-toggle');
   const hide=side.classList.toggle('hidden');
   main.classList.toggle('expand',hide);
+  btn.style.left=hide?'12px':'248px';
   btn.innerHTML=hide
     ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>'
     : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>';
 }
 function showSidebar(){
-  document.querySelector('.side').classList.remove('hidden');
+  const side=document.querySelector('.side'), btn=document.getElementById('menu-toggle');
+  side.classList.remove('hidden');
   document.querySelector('.main').classList.remove('expand');
-  const btn=document.getElementById('menu-toggle');
+  btn.style.left='248px';
   btn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>';
+}
+function toggleGroup(el){
+  el.classList.toggle('on');
+  const body=el.nextElementSibling, chev=el.querySelector('.chev');
+  if(body){body.classList.toggle('hide')}
+  if(chev){chev.classList.toggle('open')}
 }
 
 /* ---------- nav ---------- */
@@ -1905,7 +1954,9 @@ const VIEWS={dash:{eye:'Visão geral',t:'Dashboard comercial',s:'Panorama da cob
 function go(v){
   $$('.view').forEach(el=>el.classList.add('hide'));
   $('#view-'+v).classList.remove('hide');
-  $$('#nav a, #mnav a').forEach(a=>a.classList.toggle('on',a.dataset.v===v));
+  $$('#nav a[data-v], #mnav a').forEach(a=>a.classList.toggle('on',a.dataset.v===v));
+  /* highlight parent sub-group header */
+  $$('.sub-group .group-hdr').forEach(h=>{h.classList.toggle('on',h.closest('.sub-group').querySelector('a[data-v].on')!=null)});
   const info=VIEWS[v]; $('#tb-eye').textContent=info.eye; $('#tb-title').textContent=info.t; $('#tb-sub').textContent=info.s;
   if(v==='dash')renderDash(); if(v==='clientes')renderClientes(); if(v==='historico')renderHistoricoView(); if(v==='cobertura')renderCobertura(); if(v==='produtos')renderProducts(); if(v==='precos')renderPrices();
   window.scrollTo(0,0);
@@ -2010,14 +2061,14 @@ function deletePharmacy(id){
 
 async function init(){
   await loadOverrides(); merge(); loadProducts(); loadPriceTables(); const ph=loadPharmacies(); PHARMACIES_SEED.length=0; PHARMACIES_SEED.push(...ph); initBairroFilter();
-  $$('#nav a, #mnav a').forEach(a=>a.onclick=e=>{e.preventDefault();showSidebar();go(a.dataset.v);});
+  $$('#nav a[data-v], #mnav a').forEach(a=>a.onclick=e=>{e.preventDefault();showSidebar();go(a.dataset.v);});
   $('#q').oninput=renderClientes; $('#f-bairro').onchange=renderClientes; $('#f-sit').onchange=renderClientes;
   if($('#product-search')) $('#product-search').oninput=renderProducts;
   if($('#product-cat')) $('#product-cat').onchange=renderProducts;
   $('#dr-close').onclick=closeDrawer; $('#dr-cancel').onclick=closeDrawer; $('#scrim').onclick=closeDrawer; $('#dr-save').onclick=saveDrawer;
   $$('#sit-pick .sit-opt').forEach(b=>b.onclick=()=>setSit(b.dataset.v));
   document.addEventListener('keydown',e=>{ if(e.key==='Escape')closeDrawer(); });
-  document.getElementById('menu-toggle').classList.add('show');
+  const btn=document.getElementById('menu-toggle'); btn.classList.add('show'); btn.style.left='12px';
   renderDash();
   setTimeout(initFirebase, 500);
 }

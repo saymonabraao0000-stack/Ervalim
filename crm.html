@@ -971,12 +971,13 @@ async function migrateLocalStorageToFirebase(){
     }
     // Products
     const localProducts = localStorage.getItem('amazonervas-products');
+    const localVer = localStorage.getItem('amazonervas-products-version');
     if(localProducts){
       const parsed = JSON.parse(localProducts);
       const existing = await fbGet('crm', 'products');
-      if(!existing || !existing.lastWrite){
-        await fbSet('crm', 'products', {products: parsed, lastWrite: Date.now()});
-        console.log('✓ Produtos migrados para Firebase');
+      if(!existing || !existing.lastWrite || localVer !== PRODUCTS_CATALOG_VERSION){
+        await fbSet('crm', 'products', {products: parsed, lastWrite: Date.now(), version: PRODUCTS_CATALOG_VERSION});
+        console.log('✓ Produtos migrados para Firebase (versão ' + PRODUCTS_CATALOG_VERSION + ')');
       }
     }
     // Price tables
@@ -1133,7 +1134,7 @@ const PRODUCTS_SEED = [
   {id:'1098',name:'Oleo Elétrico 30ml',description:'Massagem com sensação de calor',characteristics:[],price:14.02,images:["img/7.jpg"],category:'Óleos',status:'ativo',ean:'—',ingredients:'Paraffinum liquidum, Methyl salicylate, Camphor, Menthol, Eucalyptus globulus leaf oil, Methylparaben, Propylparaben.',presentation:'Frasco PET âmbar com 30 mL'}
 ];
 let products = [];
-const PRODUCTS_CATALOG_VERSION = 'v3-catalogo-completo';
+const PRODUCTS_CATALOG_VERSION = 'v4-sync-fix';
 
 function loadProducts(){
   const storedVersion = localStorage.getItem('amazonervas-products-version');

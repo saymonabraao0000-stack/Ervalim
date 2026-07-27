@@ -57,8 +57,22 @@ button{font-family:inherit;cursor:pointer}
   width:236px;flex-shrink:0;background:var(--canopy);color:#CFE0D6;
   display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;
   padding:22px 16px;z-index:20;
+  transition:transform .25s cubic-bezier(.4,0,.2,1);
 }
-.main{margin-left:236px}
+.side.hidden{transform:translateX(-100%)}
+.main{margin-left:236px;transition:margin-left .25s cubic-bezier(.4,0,.2,1)}
+.main.expand{margin-left:0}
+
+.menu-toggle{
+  position:fixed;top:18px;left:18px;z-index:25;
+  width:36px;height:36px;border:0;border-radius:10px;
+  background:var(--canopy);color:#CFE0D6;
+  display:none;align-items:center;justify-content:center;
+  cursor:pointer;transition:background .15s;
+}
+.menu-toggle:hover{background:var(--forest)}
+.menu-toggle svg{width:20px;height:20px}
+.menu-toggle.show{display:flex}
 .brand{display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:6px 8px 22px}
 .brand img{display:block}
 .nav{display:flex;flex-direction:column;gap:3px;margin-top:6px}
@@ -323,6 +337,10 @@ tbody tr:last-child td{border-bottom:0}
 </head>
 <body>
 
+<button class="menu-toggle" id="menu-toggle" onclick="toggleSidebar()" aria-label="Menu">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+
 <div id="login-screen">
   <div class="login-container">
     <h2>CRM Comercial</h2>
@@ -335,7 +353,7 @@ tbody tr:last-child td{border-bottom:0}
 </div>
 
 <!-- SIDEBAR -->
-<aside class="side">
+<aside class="side hidden">
   <div class="brand">
     <img src="logo-branco.png" alt="Amazon Ervas" style="width:100%;height:auto;max-width:180px">
     <span style="font-size:11px;color:#7FA090;letter-spacing:.04em;text-transform:uppercase;display:block;margin-top:2px">CRM Comercial</span>
@@ -375,7 +393,7 @@ tbody tr:last-child td{border-bottom:0}
   <a href="#" data-v="precos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Preços</a>
 </nav>
 
-<div class="main">
+<div class="main expand">
   <div class="topbar">
     <div>
       <div class="eyebrow" id="tb-eye">Visão geral</div>
@@ -1860,6 +1878,22 @@ function renderHistoricoView(){
   </tr>`).join('');
 }
 
+/* ---------- sidebar toggle ---------- */
+function toggleSidebar(){
+  const side=document.querySelector('.side'), main=document.querySelector('.main'), btn=document.getElementById('menu-toggle');
+  const hide=side.classList.toggle('hidden');
+  main.classList.toggle('expand',hide);
+  btn.innerHTML=hide
+    ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>'
+    : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>';
+}
+function showSidebar(){
+  document.querySelector('.side').classList.remove('hidden');
+  document.querySelector('.main').classList.remove('expand');
+  const btn=document.getElementById('menu-toggle');
+  btn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>';
+}
+
 /* ---------- nav ---------- */
 // v2.1: Added pricing tables
 const VIEWS={dash:{eye:'Visão geral',t:'Dashboard comercial',s:'Panorama da cobertura de drogarias e das próximas ações de campo.'},
@@ -1976,13 +2010,14 @@ function deletePharmacy(id){
 
 async function init(){
   await loadOverrides(); merge(); loadProducts(); loadPriceTables(); const ph=loadPharmacies(); PHARMACIES_SEED.length=0; PHARMACIES_SEED.push(...ph); initBairroFilter();
-  $$('#nav a, #mnav a').forEach(a=>a.onclick=e=>{e.preventDefault();go(a.dataset.v);});
+  $$('#nav a, #mnav a').forEach(a=>a.onclick=e=>{e.preventDefault();showSidebar();go(a.dataset.v);});
   $('#q').oninput=renderClientes; $('#f-bairro').onchange=renderClientes; $('#f-sit').onchange=renderClientes;
   if($('#product-search')) $('#product-search').oninput=renderProducts;
   if($('#product-cat')) $('#product-cat').onchange=renderProducts;
   $('#dr-close').onclick=closeDrawer; $('#dr-cancel').onclick=closeDrawer; $('#scrim').onclick=closeDrawer; $('#dr-save').onclick=saveDrawer;
   $$('#sit-pick .sit-opt').forEach(b=>b.onclick=()=>setSit(b.dataset.v));
   document.addEventListener('keydown',e=>{ if(e.key==='Escape')closeDrawer(); });
+  document.getElementById('menu-toggle').classList.add('show');
   renderDash();
   setTimeout(initFirebase, 500);
 }

@@ -71,6 +71,9 @@ button{font-family:inherit;cursor:pointer}
 .nav a:hover{background:rgba(255,255,255,.05);color:#EAF3ED}
 .nav a.on{background:linear-gradient(90deg,rgba(58,167,107,.22),rgba(58,167,107,.05));color:#fff}
 .nav a.on svg{opacity:1;color:var(--gold)}
+.nav a.sub{padding-left:38px;font-size:13px;font-weight:400;color:#8DA89A;margin-top:-3px}
+.nav a.sub svg{width:14px;height:14px;opacity:.6}
+.nav a.sub.on{background:rgba(58,167,107,.08);color:#b8d4c4}
 .side-foot{margin-top:auto;padding:14px 10px 4px;border-top:1px solid rgba(255,255,255,.07);font-size:11px;color:#6E8A7B;line-height:1.5}
 .side-foot b{color:#9FBBAC;font-weight:600}
 
@@ -344,6 +347,9 @@ tbody tr:last-child td{border-bottom:0}
     <a href="#" data-v="clientes">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
       Clientes</a>
+    <a href="#" data-v="historico" class="sub">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      Histórico</a>
     <a href="#" data-v="cobertura">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
       Cobertura</a>
@@ -453,6 +459,20 @@ tbody tr:last-child td{border-bottom:0}
           <th>Estabelecimento</th><th>Bairro</th><th>Setor</th><th>Telefone</th><th>Situação</th><th>Próx. visita</th>
         </tr></thead>
         <tbody id="cli-body"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- HISTÓRICO -->
+  <section class="view hide" id="view-historico">
+    <h2 style="font-size:20px;font-weight:700;margin-bottom:6px">Histórico de vendas</h2>
+    <p style="font-size:14px;color:var(--ink-soft);margin-bottom:20px">Todas as vendas registradas no CRM, ordenadas da mais recente para a mais antiga.</p>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr>
+          <th>Data</th><th>Cliente</th><th>Bairro</th><th>Produtos</th><th>Valor</th><th>Obs</th>
+        </tr></thead>
+        <tbody id="hist-body"></tbody>
       </table>
     </div>
   </section>
@@ -1813,10 +1833,38 @@ function deleteHistoricoEntry(idx){
   showToast('Registro removido');
 }
 
+/* ---------- historico view (global) ---------- */
+function renderHistoricoView(){
+  const allEntries = [];
+  clients.forEach(c=>{
+    const hist = c.historico || [];
+    hist.forEach(h=>{
+      if(h.data || h.produtos){
+        allEntries.push({cliente:c.nome, bairro:c.bairro, ...h});
+      }
+    });
+  });
+  allEntries.sort((a,b)=> (b.data||'').localeCompare(a.data||''));
+  const tbody = $('#hist-body');
+  if(!allEntries.length){
+    tbody.innerHTML = '<tr><td colspan="6"><div class="empty" style="padding:40px 10px">Nenhuma venda registrada ainda.<br>Abra um cliente no drawer e adicione vendas no Histórico.</div></td></tr>';
+    return;
+  }
+  tbody.innerHTML = allEntries.map(h=>`<tr>
+    <td style="white-space:nowrap;font-weight:600">${h.data ? h.data.split('-').reverse().join('/') : '—'}</td>
+    <td class="cli-name">${h.cliente}</td>
+    <td>${h.bairro}</td>
+    <td>${h.produtos || '—'}</td>
+    <td style="font-weight:700;color:var(--leaf)">${h.valor ? 'R$ '+parseFloat(h.valor).toFixed(2) : '—'}</td>
+    <td style="color:var(--ink-soft);font-size:12px">${h.obs || ''}</td>
+  </tr>`).join('');
+}
+
 /* ---------- nav ---------- */
 // v2.1: Added pricing tables
 const VIEWS={dash:{eye:'Visão geral',t:'Dashboard comercial',s:'Panorama da cobertura de drogarias e das próximas ações de campo.'},
   clientes:{eye:'Carteira',t:'Clientes',s:'Todos os estabelecimentos mapeados. Toque numa linha para registrar visita, situação e valores.'},
+  historico:{eye:'Carteira',t:'Histórico de vendas',s:'Todas as vendas registradas no CRM, ordenadas da mais recente para a mais antiga.'},
   cobertura:{eye:'Território',t:'Cobertura por bairro',s:'Onde a Amazon Ervas já está forte e onde há espaço para crescer em Manaus.'},
   produtos:{eye:'Catálogo',t:'Produtos',s:'Gerencie o catálogo de produtos Amazon Ervas com preços, fotos e descrições.'},
   precos:{eye:'Tabelas',t:'Preços',s:'Defina diferentes tabelas de preços com descontos variáveis para cada produto.'}};
@@ -1825,7 +1873,7 @@ function go(v){
   $('#view-'+v).classList.remove('hide');
   $$('#nav a, #mnav a').forEach(a=>a.classList.toggle('on',a.dataset.v===v));
   const info=VIEWS[v]; $('#tb-eye').textContent=info.eye; $('#tb-title').textContent=info.t; $('#tb-sub').textContent=info.s;
-  if(v==='dash')renderDash(); if(v==='clientes')renderClientes(); if(v==='cobertura')renderCobertura(); if(v==='produtos')renderProducts(); if(v==='precos')renderPrices();
+  if(v==='dash')renderDash(); if(v==='clientes')renderClientes(); if(v==='historico')renderHistoricoView(); if(v==='cobertura')renderCobertura(); if(v==='produtos')renderProducts(); if(v==='precos')renderPrices();
   window.scrollTo(0,0);
 }
 

@@ -15,8 +15,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
 :root{
   --canopy:#0C231A;      /* dossel — quase preto esverdeado */
@@ -129,21 +131,21 @@ button{font-family:inherit;cursor:pointer}
 .empty{padding:30px 10px;text-align:center;color:var(--ink-soft);font-size:13px}
 .empty svg{width:34px;height:34px;opacity:.4;margin-bottom:8px}
 
-/* ---------- CANOPY (heatmap) ---------- */
-.canopy-wrap .panel{padding:22px}
-.canopy{display:grid;grid-template-columns:repeat(auto-fill,minmax(158px,1fr));gap:11px}
-.tile{border-radius:13px;padding:14px 15px;color:#fff;position:relative;overflow:hidden;cursor:pointer;
-  transition:transform .16s,box-shadow .16s;min-height:104px;display:flex;flex-direction:column;justify-content:space-between}
-.tile:hover{transform:translateY(-3px);box-shadow:var(--shadow-lg)}
-.tile .bn{font-family:'Bricolage Grotesque';font-weight:700;font-size:14px;line-height:1.15;z-index:1;text-shadow:0 1px 3px rgba(0,0,0,.25)}
-.tile .pct{font-family:'Bricolage Grotesque';font-weight:800;font-size:30px;line-height:1;z-index:1}
-.tile .meta{font-size:11px;opacity:.9;z-index:1}
-.tile .veil{position:absolute;inset:0;background:radial-gradient(circle at 78% 20%,rgba(255,255,255,.18),transparent 60%)}
-
-/* legend */
-.legend{display:flex;gap:18px;flex-wrap:wrap;margin-top:16px;font-size:12px;color:var(--ink-soft)}
-.legend span{display:flex;align-items:center;gap:7px}
-.legend i{width:12px;height:12px;border-radius:4px;display:inline-block}
+/* ---------- MAP ---------- */
+.crm-map{height:420px;border-radius:12px;overflow:hidden;background:var(--paper);z-index:1}
+.crm-map-full{height:480px;border-radius:12px;overflow:hidden;background:var(--paper);z-index:1}
+.leaflet-container{font-family:'Inter',system-ui,sans-serif}
+.map-legend{background:var(--white);padding:10px 14px;border-radius:10px;box-shadow:var(--shadow);font-size:12px;line-height:1.6}
+.map-legend b{display:block;font-size:11px;color:var(--ink-soft);margin-bottom:3px;font-weight:600}
+.map-legend i{display:inline-block;width:14px;height:14px;border-radius:3px;margin-right:7px;vertical-align:middle}
+.map-legend span{display:block;color:var(--ink)}
+.map-tooltip{font-size:12.5px;line-height:1.5}
+.map-tooltip b{display:block;font-size:14px;color:var(--forest);font-family:'Bricolage Grotesque',sans-serif}
+.map-tooltip .pct{font-family:'Bricolage Grotesque';font-weight:800;font-size:22px;color:var(--leaf)}
+.map-btns{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.map-btn{padding:7px 14px;border:1px solid var(--line);border-radius:20px;background:var(--white);font-size:12px;font-weight:600;color:var(--ink-soft);cursor:pointer;transition:.14s}
+.map-btn:hover{border-color:var(--leaf);color:var(--leaf);background:var(--leaf-soft)}
+.map-btn.on{background:var(--river);color:#fff;border-color:var(--river)}
 
 /* ---------- TABLE ---------- */
 .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px}
@@ -288,13 +290,9 @@ tbody tr:last-child td{border-bottom:0}
   select.filter{font-size:13px;padding:9px 30px 9px 10px;max-width:150px}
   .count-pill{font-size:12px}
   .toolbar button{padding:8px 14px!important;font-size:13px!important}
-  /* Canopy */
-  .canopy{grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px}
-  .tile{padding:12px;min-height:88px}
-  .tile .bn{font-size:13px}
-  .tile .pct{font-size:24px}
-  .tile .meta{font-size:10px}
-  .legend{gap:10px;font-size:11px}
+  /* Map */
+  .crm-map{height:300px}
+  .crm-map-full{height:360px}
   /* Login */
   #login-screen .login-container{padding:28px 22px;margin:16px}
   .login-container h2{font-size:20px}
@@ -312,7 +310,8 @@ tbody tr:last-child td{border-bottom:0}
   .kpi-grid{grid-template-columns:1fr;gap:8px}
   .kpi.hero{grid-column:span 1}
   #products-grid{grid-template-columns:1fr!important}
-  .canopy{grid-template-columns:repeat(auto-fill,minmax(110px,1fr))}
+  .crm-map{height:240px}
+  .crm-map-full{height:280px}
   .mtabs a{font-size:10px;padding:8px 2px}
   .mtabs a svg{width:16px;height:16px}
 }
@@ -415,8 +414,8 @@ tbody tr:last-child td{border-bottom:0}
 
     <div class="card panel canopy-wrap">
       <h3>Cobertura por bairro</h3>
-      <div class="ph">Toque num bairro para filtrar os clientes daquela região · ordenado por prioridade de ataque</div>
-      <div class="canopy" id="dash-canopy"></div>
+      <div class="ph">Clique num bairro no mapa para filtrar os clientes daquela região</div>
+      <div class="crm-map" id="dash-map"></div>
     </div>
   </section>
 
@@ -461,14 +460,15 @@ tbody tr:last-child td{border-bottom:0}
   <!-- COBERTURA -->
   <section class="view hide" id="view-cobertura">
     <div class="card panel canopy-wrap" style="margin-bottom:18px">
-      <h3>Mapa de calor — Manaus vista do alto</h3>
-      <div class="ph">Cada bloco é um bairro. A cor mostra quanto da região já é cliente ativo.</div>
-      <div class="canopy" id="cob-canopy"></div>
-      <div class="legend">
-        <span><i style="background:var(--leaf)"></i> Alta (≥60%) — manter</span>
-        <span><i style="background:var(--amber)"></i> Parcial (30–59%) — reforçar</span>
-        <span><i style="background:var(--clay)"></i> Baixa (&lt;30%) — atacar</span>
+      <h3>Mapa de calor — Manaus</h3>
+      <div class="ph">Cada bairro é colorido conforme a cobertura de clientes ativos. Clique para filtrar.</div>
+      <div class="map-btns" id="map-btns">
+        <button class="map-btn on" data-filter="all">Todos</button>
+        <button class="map-btn" data-filter="ativos">Ativos</button>
+        <button class="map-btn" data-filter="prioritarios">Prioritários (&lt;30%)</button>
+        <button class="map-btn" data-filter="centro">Centralizar Manaus</button>
       </div>
+      <div class="crm-map-full" id="cob-map"></div>
     </div>
     <div class="tbl-wrap">
       <table>
@@ -1478,7 +1478,7 @@ function renderDash(){
     }).join('');
   }
 
-  renderCanopy('#dash-canopy', true);
+  renderDashCanopy();
 }
 function animateRing(pct){
   const fg=$('#ring-fg'), txt=$('#ring-txt'), C=314;
@@ -1489,29 +1489,173 @@ function animateRing(pct){
   requestAnimationFrame(step);
 }
 
-/* ---------- canopy ---------- */
-function renderCanopy(sel, clickFilter){
-  const bs = bairros().map(b=>({b, ...covFor(b)})).sort((a,b)=>a.pct-b.pct);
-  $(sel).innerHTML = bs.map(x=>{
-    const col = heatColor(x.pct);
-    return `<div class="tile" data-bairro="${x.b}" style="background:linear-gradient(150deg,${col.a},${col.b})">
-      <div class="veil"></div>
-      <div class="bn">${x.b}</div>
-      <div><div class="pct">${Math.round(x.pct*100)}%</div>
-      <div class="meta">${x.ativos}/${x.total} ativos</div></div>
-    </div>`;
-  }).join('');
-  if(clickFilter){
-    $$(sel+' .tile').forEach(t=>t.onclick=()=>{
-      go('clientes'); $('#f-bairro').value=t.dataset.bairro; renderClientes();
-    });
+/* ---------- Leaflet map ---------- */
+const BAIRRO_MAP = {
+  'Adrianópolis':'ADRIANÓPOLIS','Aleixo':'ALEIXO','Alvorada':'ALVORADA','Armando Mendes':'ARMANDO MENDES',
+  'Betânia':'BETÂNIA','Cachoeirinha':'CACHOEIRINHA','Centro / Praça 14':'CENTRO','Chapada':'CHAPADA',
+  'Cidade de Deus':'CIDADE DE DEUS','Cidade Nova / Nova Cidade':'CIDADE NOVA',
+  'Colônia Oliveira Machado':'COLÔNIA OLIVEIRA MACHADO','Colônia Santo Antônio':'COLÔNIA SANTO ANTÔNIO',
+  'Colônia Terra Nova':'COLÔNIA TERRA NOVA','Compensa':'COMPENSA','Coroado':'COROADO','Crespo':'CRESPO',
+  'Da Paz':'DA PAZ','Distrito Industrial I':'DISTRITO INDUSTRIAL I','Distrito Industrial II':'DISTRITO INDUSTRIAL II',
+  'Dom Pedro':'DOM PEDRO I','Educandos':'EDUCANDOS','Flores':'FLORES','Gilberto Mestrinho':'GILBERTO MESTRINHO',
+  'Glória':'GLÓRIA','Japiim':'JAPIIM','Jorge Teixeira':'JORGE TEIXEIRA','Lago Azul':'LAGO AZUL',
+  'Lírio do Vale':'LÍRIO DO VALE','Mauazinho':'MAUAZINHO','Monte das Oliveiras':'MONTE DAS OLIVEIRAS',
+  'Morro da Liberdade':'MORRO DA LIBERDADE','Nossa Senhora Aparecida':'NOSSA SENHORA APARECIDA',
+  'Nossa Sra. das Graças':'NOSSA SENHORA DAS GRAÇAS','Nova Esperança':'NOVA ESPERANÇA',
+  'Novo Aleixo / Mutirão':'NOVO ALEIXO','Novo Aleixo / Mutirao':'NOVO ALEIXO',
+  'Novo Israel':'NOVO ISRAEL','Parque 10 de Novembro':'PARQUE 10 DE NOVEMBRO','Petrópolis':'PETRÓPOLIS',
+  'Planalto':'PLANALTO','Planalto / Campos Elíseos':'PLANALTO','Planalto / Campos Elóseos':'PLANALTO',
+  'Ponta Negra':'PONTA NEGRA','Presidente Vargas':'PRESIDENTE VARGAS','Puraquequara':'PURAQUEQUARA',
+  'Raiz':'RAIZ','Redenção':'REDENÇÃO','Santa Etelvina / Col. Ant. Aleixo':'SANTA ETELVINA',
+  'Santa Luzia':'SANTA LUZIA','Santo Agostinho':'SANTO AGOSTINHO','Santo Antônio':'SANTO ANTÔNIO',
+  'São Francisco':'SÃO FRANCISCO','São Geraldo':'SÃO GERALDO','São Jorge':'SÃO JORGE',
+  'São José Operário':'SÃO JOSÉ OPERÁRIO','São Lázaro':'SÃO LÁZARO','São Raimundo':'SÃO RAIMUNDO',
+  'Tancredo Neves':'TANCREDO NEVES','Tarumã':'TARUMÃ','Tarumã-Açu / Tarumã':'TARUMÃ-AÇÚ',
+  'Vila Buriti':'VILA BURITI','Vila da Prata':'VILA DA PRATA','Zumbi dos Palmares':'ZUMBI DOS PALMARES'
+};
+const GEOJSON_URL = 'https://raw.githubusercontent.com/Charles-Igeotecnologia/localidades-manaus/main/bairros.geojson';
+let geoData = null;
+let geoLoading = false;
+let geoCallbacks = [];
+
+function onGeoLoaded(cb){ if(geoData){ cb(geoData); return; } geoCallbacks.push(cb); if(!geoLoading){ geoLoading=true; loadGeoJSON(); } }
+function loadGeoJSON(){
+  const cached=localStorage.getItem('amazonervas-geojson');
+  if(cached){ try{ geoData=JSON.parse(cached); geoLoaded(); return; }catch(e){} }
+  fetch(GEOJSON_URL).then(r=>r.json()).then(d=>{
+    geoData=d;
+    try{ localStorage.setItem('amazonervas-geojson',JSON.stringify(d)); }catch(e){}
+    geoLoaded();
+  }).catch(()=>{
+    console.log('GeoJSON fetch failed, using minimal fallback');
+    geoData={type:'FeatureCollection',features:[]};
+    geoLoaded();
+  });
+}
+function geoLoaded(){ geoCallbacks.forEach(cb=>cb(geoData)); geoCallbacks=[]; }
+
+function getGeoBairro(crmBairro){ return BAIRRO_MAP[crmBairro]||crmBairro.toUpperCase(); }
+
+function makeMap(elId, full){
+  const map = L.map(elId,{zoomControl:false,attributionControl:false}).setView([-3.119,-60.0217],11);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{
+    maxZoom:18,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>'
+  }).addTo(map);
+  L.control.zoom({position:'bottomright'}).addTo(map);
+  if(!full) L.control.attribution({position:'bottomright',prefix:'Amazon Ervas'}).addTo(map);
+  return map;
+}
+
+function getCovData(){
+  const all=bairros(), data={};
+  all.forEach(b=>{ const c=covFor(b); data[b]={total:c.total,ativos:c.ativos,pct:c.pct}; });
+  return data;
+}
+
+function colorForPct(pct){
+  if(pct>=.6) return {fill:'#2E9E5B',stroke:'#1B6E42',label:'Alta (≥60%)'};
+  if(pct>=.3) return {fill:'#E0A82E',stroke:'#B07E17',label:'Parcial (30-59%)'};
+  return {fill:'#C0492E',stroke:'#8F3421',label:'Baixa (<30%)'};
+}
+
+let currentMapFilter = 'all';
+function applyMapFilter(map, layer, filter){
+  currentMapFilter = filter;
+  layer.eachLayer(l=>{
+    const b=l.feature.properties.NOME_BAIRR;
+    const cov = l.__crmData;
+    let show = true;
+    if(filter==='ativos' && (!cov||cov.ativos===0)) show=false;
+    if(filter==='prioritarios' && (!cov||cov.pct>=.3)) show=false;
+    if(filter==='centro') show=true;
+    l.setStyle({opacity:show?1:0.15,fillOpacity:show?0.7:0.05});
+  });
+}
+
+function styleBairro(feature){
+  const cov=feature.__crmData;
+  const c=colorForPct(cov?cov.pct:0);
+  return {fillColor:c.fill,weight:1.2,opacity:1,color:c.stroke,fillOpacity:0.7};
+}
+
+function highlightFeature(e){ const l=e.target; l.setStyle({weight:2,color:'#15251D',fillOpacity:0.85}); l.bringToFront(); }
+function resetHighlight(e, layer){
+  const l=e.target; l.setStyle(styleBairro(l.feature));
+  if(currentMapFilter!=='all'){
+    const cov=l.__crmData;
+    let show=true;
+    if(currentMapFilter==='ativos' && (!cov||cov.ativos===0)) show=false;
+    if(currentMapFilter==='prioritarios' && (!cov||cov.pct>=.3)) show=false;
+    if(!show) l.setStyle({opacity:0.15,fillOpacity:0.05});
   }
+}
+
+function updateMapColors(map, layer){
+  const covData = getCovData();
+  const geoMap = {};
+  Object.keys(covData).forEach(k=>{ const g=getGeoBairro(k); geoMap[g]=(geoMap[g]||{total:0,ativos:0}); geoMap[g].total+=covData[k].total; geoMap[g].ativos+=covData[k].ativos; });
+  layer.eachLayer(l=>{
+    const bn=l.feature.properties.NOME_BAIRR;
+    const d=geoMap[bn]||null;
+    l.__crmData = d;
+    l.setStyle(styleBairro(l.feature));
+    const bindContent = ()=>{
+      const cd=l.__crmData;
+      if(!cd) return `<div class="map-tooltip"><b>${bn}</b>Nenhum cliente mapeado</div>`;
+      const pct=cd.total?Math.round(cd.ativos/cd.total*100):0;
+      let pr; if(pct>=60) pr='Manter'; else if(pct>=30) pr='Reforçar'; else pr='Atacar';
+      return `<div class="map-tooltip"><b>${bn}</b><span class="pct">${pct}%</span>${cd.ativos}/${cd.total} ativos · <b>${pr}</b></div>`;
+    };
+    l.bindTooltip(bindContent,{direction:'top',offset:[0,-6],className:'map-tooltip-wrap'});
+    if(!l._crmBound){
+      l._crmBound=true;
+      l.on('mouseover',function(e){ highlightFeature(e); if(l.getTooltip()) l.openTooltip(); });
+      l.on('mouseout',function(e){ resetHighlight(e,layer); if(l.getTooltip()) l.closeTooltip(); });
+      l.on('click',function(){
+        const crmBairro = Object.keys(BAIRRO_MAP).find(k=>BAIRRO_MAP[k]===bn)||bn;
+        go('clientes'); $('#f-bairro').value=crmBairro; renderClientes();
+      });
+    }
+  });
+  applyMapFilter(map, layer, currentMapFilter);
+}
+
+let dashMap = null;
+let cobMap = null;
+let dashLayer = null;
+let cobLayer = null;
+
+function renderCanopyMap(containerId, full){
+  const map = makeMap(containerId, full);
+  if(containerId==='dash-map') dashMap=map; else cobMap=map;
+  onGeoLoaded(data=>{
+    const layer = L.geoJSON(data,{style:styleBairro}).addTo(map);
+    if(containerId==='dash-map') dashLayer=layer; else cobLayer=layer;
+    updateMapColors(map, layer);
+    L.control.attribution({position:'bottomright',prefix:'Amazon Ervas · Dados: IGEOTECNOLOGIA'}).addTo(map);
+    const LegendControl = L.Control.extend({onAdd:function(){
+      const div=L.DomUtil.create('div','map-legend');
+      div.innerHTML='<b>COBERTURA</b><span><i style="background:#2E9E5B"></i>Alta (≥60%)</span><span><i style="background:#E0A82E"></i>Parcial (30-59%)</span><span><i style="background:#C0492E"></i>Baixa (<30%)</span>';
+      return div;
+    }});
+    map.addControl(new LegendControl({position:'bottomleft'}));
+  });
+}
+
+/* ---------- dashboard map ---------- */
+function renderDashCanopy(){
+  if(dashMap){ if(dashLayer) updateMapColors(dashMap, dashLayer); return; }
+  renderCanopyMap('dash-map', false);
 }
 
 /* ---------- cobertura tab ---------- */
 function renderCobertura(){
-  renderCanopy('#cob-canopy', false);
-  $$('#cob-canopy .tile').forEach(t=>t.onclick=()=>{ go('clientes'); $('#f-bairro').value=t.dataset.bairro; renderClientes(); });
+  if(!cobMap){
+    renderCanopyMap('cob-map', true);
+  } else {
+    if(cobLayer) updateMapColors(cobMap, cobLayer);
+  }
+  setTimeout(()=>{ if(cobMap) cobMap.invalidateSize(); }, 50);
   const bs = bairros().map(b=>({b, ...covFor(b)})).sort((a,b)=>a.pct-b.pct);
   $('#cob-body').innerHTML = bs.map((x,i)=>{
     let pr,cls;
@@ -1523,6 +1667,17 @@ function renderCobertura(){
       <td><span class="badge ${cls}"><span class="bd"></span>${pr}</span></td></tr>`;
   }).join('');
   $$('#cob-body tr').forEach(tr=>tr.onclick=()=>{ go('clientes'); $('#f-bairro').value=tr.dataset.bairro; renderClientes(); });
+  $$('#map-btns .map-btn').forEach(btn=>{
+    btn.classList.toggle('on',btn.dataset.filter===currentMapFilter||(currentMapFilter==='all'&&btn.dataset.filter==='all'));
+    btn.onclick=()=>{
+      $$('#map-btns .map-btn').forEach(b=>b.classList.remove('on'));
+      btn.classList.add('on');
+      const f=btn.dataset.filter;
+      if(f==='centro' && cobMap) cobMap.setView([-3.119,-60.0217],11);
+      else if(f==='centro' && dashMap) dashMap.setView([-3.119,-60.0217],11);
+      else if(cobLayer && cobMap) applyMapFilter(cobMap, cobLayer, f);
+    };
+  });
 }
 
 /* ---------- clientes ---------- */

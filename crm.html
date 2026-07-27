@@ -240,22 +240,84 @@ tbody tr:last-child td{border-bottom:0}
 .login-error{color:#ff6b6b;font-size:12px;text-align:center;margin-bottom:16px;display:none}
 .login-error.show{display:block}
 
-/* mobile */
+/* ---------- mobile ---------- */
 .mtabs{display:none}
 @media(max-width:900px){
-  body{flex-direction:column;padding-bottom:64px}
+  body{flex-direction:column;padding-bottom:64px;overflow-x:hidden}
   .side{display:none}
-  .mtabs{display:flex;position:fixed;bottom:0;left:0;right:0;z-index:30;background:var(--canopy);padding:8px;gap:4px;border-top:1px solid rgba(255,255,255,.1)}
-  .mtabs a{flex:1;text-align:center;padding:12px 8px;border-radius:8px;color:#B4CABB;text-decoration:none;font-size:12px;font-weight:600;white-space:nowrap}
+  .mtabs{display:flex;position:fixed;bottom:0;left:0;right:0;z-index:30;background:var(--canopy);padding:6px 4px;gap:2px;border-top:1px solid rgba(255,255,255,.1);height:60px}
+  .mtabs a{flex:1;text-align:center;padding:10px 4px;border-radius:8px;color:#B4CABB;text-decoration:none;font-size:11px;font-weight:600;white-space:nowrap;display:flex;flex-direction:column;align-items:center;gap:3px}
+  .mtabs a svg{width:18px;height:18px;opacity:.8}
   .mtabs a.on{background:rgba(58,167,107,.22);color:#fff}
-  .topbar{padding:18px 18px 14px}
-  .topbar h1{font-size:21px}
-  .view{padding:18px 18px 80px}
-  .kpi-grid{grid-template-columns:1fr 1fr;gap:12px}
-  .kpi.hero{grid-column:span 2}
-  .two{grid-template-columns:1fr}
-  .drawer{width:100%}
+  .mtabs a.on svg{opacity:1;color:var(--gold)}
+  .topbar{flex-direction:column;gap:8px;padding:14px 16px 12px;align-items:flex-start}
+  .topbar h1{font-size:20px}
+  .saved{font-size:11px;align-self:flex-end;margin-top:-4px}
+  .view{padding:14px 14px 80px}
+  /* KPIs */
+  .kpi-grid{grid-template-columns:1fr 1fr;gap:10px}
+  .kpi.hero{grid-column:span 2;flex-direction:row;gap:14px;padding:16px}
+  .kpi.hero .ring{width:80px;height:80px}
+  .hero-txt .big{font-size:24px}
+  .kpi{padding:14px 16px}
+  .kpi .num{font-size:28px;margin-top:8px}
+  .kpi .lbl{font-size:11px}
+  .kpi .foot{font-size:11px;margin-top:6px}
+  .two{grid-template-columns:1fr;gap:12px}
+  .panel{padding:16px}
+  /* Product grid: 2 columns on mobile */
+  #products-grid{grid-template-columns:1fr 1fr!important;gap:10px!important}
+  /* Drawer full width */
+  .drawer{width:100%;max-width:100vw}
+  .dr-head{padding:16px 18px 14px}
+  .dr-head h2{font-size:18px}
+  .dr-body{padding:16px 18px}
+  .dr-foot{padding:12px 16px}
+  .row2{grid-template-columns:1fr;gap:8px}
+  .sit-pick{grid-template-columns:1fr 1fr;gap:6px}
+  .sit-opt{padding:8px;font-size:12px}
+  /* Tables */
+  .tbl-wrap{overflow-x:auto;border-radius:12px}
+  table{min-width:520px}
   thead th:nth-child(3),tbody td:nth-child(3),thead th:nth-child(4),tbody td:nth-child(4){display:none}
+  thead th{padding:10px 12px;font-size:10px}
+  tbody td{padding:10px 12px;font-size:12.5px}
+  .cli-sub{font-size:11px}
+  .badge{font-size:11px;padding:3px 8px}
+  /* Toolbar */
+  .toolbar{gap:8px}
+  .search{min-width:140px}
+  .search input{padding:9px 12px 9px 34px;font-size:13px}
+  select.filter{font-size:13px;padding:9px 30px 9px 10px;max-width:150px}
+  .count-pill{font-size:12px}
+  .toolbar button{padding:8px 14px!important;font-size:13px!important}
+  /* Canopy */
+  .canopy{grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px}
+  .tile{padding:12px;min-height:88px}
+  .tile .bn{font-size:13px}
+  .tile .pct{font-size:24px}
+  .tile .meta{font-size:10px}
+  .legend{gap:10px;font-size:11px}
+  /* Login */
+  #login-screen .login-container{padding:28px 22px;margin:16px}
+  .login-container h2{font-size:20px}
+  .login-container input{padding:10px 12px;font-size:13px}
+  /* Modals */
+  #pharmacy-modal>div,#product-modal>div,#price-table-modal>div{padding:20px!important;margin:10px!important;width:auto!important}
+  #product-detail-modal>div{padding:24px!important;margin:16px!important}
+  /* Product detail */
+  #product-detail-content>div>div{grid-template-columns:1fr!important}
+  #product-detail-content img{height:220px!important}
+  /* Toast */
+  .toast{font-size:12px;padding:10px 16px;bottom:76px;max-width:90vw}
+}
+@media(max-width:420px){
+  .kpi-grid{grid-template-columns:1fr;gap:8px}
+  .kpi.hero{grid-column:span 1}
+  #products-grid{grid-template-columns:1fr!important}
+  .canopy{grid-template-columns:repeat(auto-fill,minmax(110px,1fr))}
+  .mtabs a{font-size:10px;padding:8px 2px}
+  .mtabs a svg{width:16px;height:16px}
 }
 @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
@@ -308,11 +370,11 @@ tbody tr:last-child td{border-bottom:0}
 
 <!-- MOBILE TABS -->
 <nav class="mtabs" id="mnav">
-  <a href="#" data-v="dash" class="on">Dashboard</a>
-  <a href="#" data-v="clientes">Clientes</a>
-  <a href="#" data-v="cobertura">Cobertura</a>
-  <a href="#" data-v="produtos">Produtos</a>
-  <a href="#" data-v="precos">Preços</a>
+  <a href="#" data-v="dash" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>Dashboard</a>
+  <a href="#" data-v="clientes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Clientes</a>
+  <a href="#" data-v="cobertura"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>Cobertura</a>
+  <a href="#" data-v="produtos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 11h-3.5a1.5 1.5 0 0 1 0-3H16"/></svg>Produtos</a>
+  <a href="#" data-v="precos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Preços</a>
 </nav>
 
 <div class="main">

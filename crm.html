@@ -924,6 +924,8 @@ function listenFirebaseChanges(){
   // Products
   fbUnsubscribes.push(db.collection('crm').doc('products').onSnapshot(snap=>{
     if(snap.exists && snap.data().lastWrite !== (window.__lastProductWrite || 0)){
+      const fbVersion = snap.data().version || '';
+      if(fbVersion !== PRODUCTS_CATALOG_VERSION) return; // keep newer local seed
       const fb = snap.data().products || [];
       if(JSON.stringify(fb) !== JSON.stringify(products)){
         products = fb;
@@ -1152,7 +1154,7 @@ function saveProducts(){
   try {
     localStorage.setItem('amazonervas-products', JSON.stringify(products));
     window.__lastProductWrite = Date.now();
-    fbSet('crm', 'products', {products, lastWrite: window.__lastProductWrite});
+    fbSet('crm', 'products', {products, lastWrite: window.__lastProductWrite, version: PRODUCTS_CATALOG_VERSION});
   } catch(e) { console.error('save products error:', e); }
 }
 

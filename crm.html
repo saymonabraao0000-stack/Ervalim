@@ -376,7 +376,7 @@ tbody tr:last-child td{border-bottom:0}
 </div>
 
 <!-- SIDEBAR -->
-<aside class="side hidden">
+<aside class="side">
   <button class="side-toggle" id="menu-toggle" onclick="toggleSidebar()" aria-label="Fechar menu">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
   </button>
@@ -401,6 +401,9 @@ tbody tr:last-child td{border-bottom:0}
         </a>
       </div>
     </div>
+    <a href="#" data-v="cadastros">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><polyline points="17 11 19 13 23 9"/></svg>
+      Cadastros</a>
     <a href="#" data-v="cobertura">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
       Cobertura</a>
@@ -424,12 +427,13 @@ tbody tr:last-child td{border-bottom:0}
 <nav class="mtabs" id="mnav">
   <a href="#" data-v="dash" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>Dashboard</a>
   <a href="#" data-v="clientes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Clientes</a>
+  <a href="#" data-v="cadastros"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><polyline points="17 11 19 13 23 9"/></svg>Cadastros</a>
   <a href="#" data-v="cobertura"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>Cobertura</a>
   <a href="#" data-v="produtos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 11h-3.5a1.5 1.5 0 0 1 0-3H16"/></svg>Produtos</a>
   <a href="#" data-v="precos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Preços</a>
 </nav>
 
-<div class="main expand">
+<div class="main">
   <div class="topbar">
     <div>
       <div class="eyebrow" id="tb-eye">Visão geral</div>
@@ -472,6 +476,14 @@ tbody tr:last-child td{border-bottom:0}
       </div>
     </div>
 
+    <div class="card panel" style="margin-top:16px">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:2px">
+        <h3>Últimas visitas</h3>
+        <span style="font-size:12px;color:var(--ink-soft)">Ordenado da visita mais antiga para a mais recente</span>
+      </div>
+      <div class="ph">Clientes com visita mais antiga — priorize os do topo</div>
+      <div class="visits" id="ultimas-visitas-list"></div>
+    </div>
     <div class="card panel canopy-wrap">
       <h3>Cobertura por bairro</h3>
       <div class="ph">Clique num bairro no mapa para filtrar os clientes daquela região</div>
@@ -497,6 +509,10 @@ tbody tr:last-child td{border-bottom:0}
         <option value="grande">Grandes redes</option>
         <option value="pequeno">Mercadinhos / Locais</option>
       </select>
+      <select class="filter" id="f-vendedor">
+        <option value="">Todos os vendedores</option>
+      </select>
+      <button onclick="openVendedorModal()" style="background:transparent;color:var(--ink-soft);border:1px solid var(--line);padding:8px 12px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;white-space:nowrap">⚙️ Gerenciar</button>
       <select class="filter" id="f-sit">
         <option value="">Todas as situações</option>
         <option value="ativo">Ativo</option>
@@ -510,7 +526,7 @@ tbody tr:last-child td{border-bottom:0}
     <div class="tbl-wrap">
       <table>
         <thead><tr>
-          <th>Estabelecimento</th><th>Bairro</th><th>Setor</th><th>Telefone</th><th>Situação</th><th>Próx. visita</th>
+          <th>Estabelecimento</th><th>Bairro</th><th>Setor</th><th>Telefone</th><th>Situação</th><th>Vendedor</th><th>Próx. visita</th>
         </tr></thead>
         <tbody id="cli-body"></tbody>
       </table>
@@ -583,6 +599,63 @@ tbody tr:last-child td{border-bottom:0}
     </div>
     <div id="prices-list" style="display:grid;gap:20px"></div>
   </section>
+
+  <!-- CADASTROS -->
+  <section class="view hide" id="view-cadastros">
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px">
+      <div class="card panel">
+        <h3>Vendedores</h3>
+        <div class="ph">Equipe comercial</div>
+        <div style="display:flex;gap:8px;margin-bottom:14px">
+          <input type="text" id="cad-vendedor" placeholder="Nome do vendedor" style="flex:1;padding:9px 12px;border:1px solid var(--line);border-radius:8px;font-size:13px">
+          <button onclick="addCadVendedor()" style="background:var(--river);color:#fff;border:none;padding:9px 14px;border-radius:8px;font-weight:600;cursor:pointer;font-size:13px;white-space:nowrap">+ Adicionar</button>
+        </div>
+        <div id="cad-vendedores-list"></div>
+      </div>
+      <div class="card panel">
+        <h3>Bairros</h3>
+        <div class="ph">Bairros de Manaus</div>
+        <div style="display:flex;gap:8px;margin-bottom:14px">
+          <input type="text" id="cad-bairro" placeholder="Nome do bairro" style="flex:1;padding:9px 12px;border:1px solid var(--line);border-radius:8px;font-size:13px">
+          <button onclick="addCadBairro()" style="background:var(--river);color:#fff;border:none;padding:9px 14px;border-radius:8px;font-weight:600;cursor:pointer;font-size:13px;white-space:nowrap">+ Adicionar</button>
+        </div>
+        <div id="cad-bairros-list"></div>
+      </div>
+      <div class="card panel">
+        <h3>Conjuntos</h3>
+        <div class="ph">Conjuntos habitacionais e condomínios</div>
+        <div style="display:flex;gap:8px;margin-bottom:14px">
+          <input type="text" id="cad-conjunto" placeholder="Nome do conjunto" style="flex:1;padding:9px 12px;border:1px solid var(--line);border-radius:8px;font-size:13px">
+          <button onclick="addCadConjunto()" style="background:var(--river);color:#fff;border:none;padding:9px 14px;border-radius:8px;font-weight:600;cursor:pointer;font-size:13px;white-space:nowrap">+ Adicionar</button>
+        </div>
+        <div id="cad-conjuntos-list"></div>
+      </div>
+    </div>
+    <div class="card panel" style="margin-top:16px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+        <div><h3>Farmácias / Drogarias</h3><div class="ph">Farmácias e drogarias cadastradas</div></div>
+        <button onclick="openPharmacyForm()" style="background:var(--river);color:#fff;border:none;padding:9px 16px;border-radius:8px;font-weight:600;cursor:pointer;font-size:13px">+ Nova Farmácia</button>
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Nome</th><th>Bairro</th><th>Endereço</th><th>Telefone</th><th>Vendedor</th><th></th></tr></thead>
+          <tbody id="cad-farmacias-body"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card panel" style="margin-top:16px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+        <div><h3>Mercados / Supermercados</h3><div class="ph">Mercados, supermercados e mercearias</div></div>
+        <button onclick="openMercadoForm()" style="background:var(--river);color:#fff;border:none;padding:9px 16px;border-radius:8px;font-weight:600;cursor:pointer;font-size:13px">+ Novo Mercado</button>
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Nome</th><th>Bairro</th><th>Endereço</th><th>Categoria</th><th></th></tr></thead>
+          <tbody id="cad-mercados-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
 </div>
 
 <!-- DRAWER -->
@@ -617,7 +690,7 @@ tbody tr:last-child td{border-bottom:0}
       </div>
       <div class="fld"><label>Valor médio (R$)</label><input type="number" id="f-valor" placeholder="0,00" min="0" step="10"></div>
     </div>
-    <div class="fld"><label>Responsável</label><input type="text" id="f-resp" placeholder="Vendedor(a) que atende"></div>
+    <div class="fld"><label>Responsável</label><input type="text" id="f-resp" placeholder="Vendedor(a) que atende" list="vl-resp"><datalist id="vl-resp"></datalist></div>
     <div class="fld"><label>Produtos vendidos / observações</label><textarea id="f-obs" placeholder="Ex.: leva Melkatéis toda semana; interessado na linha Polar Ice…"></textarea></div>
     <div class="fld" style="margin-top:8px">
       <label>Histórico de vendas</label>
@@ -650,11 +723,56 @@ tbody tr:last-child td{border-bottom:0}
       <div><label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px">Endereço</label><input type="text" id="phf-endereco" placeholder="Av. Principal, 123" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:6px"></div>
       <div><label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px">Telefone</label><input type="tel" id="phf-telefone" placeholder="(92) 98765-4321" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:6px"></div>
       <div><label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px">Horário</label><input type="text" id="phf-horario" placeholder="7h-22h" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:6px"></div>
+      <div><label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px">Vendedor</label><input type="text" id="phf-resp" placeholder="Ex: João" list="vl-phf" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:6px"><datalist id="vl-phf"></datalist></div>
       <div style="display:flex;gap:10px;margin-top:10px">
         <button type="submit" style="flex:1;background:#3AA76B;color:#fff;border:none;padding:10px;border-radius:6px;font-weight:600;cursor:pointer">Salvar</button>
         <button type="button" onclick="closePharmacyModal()" style="flex:1;background:#eee;border:none;padding:10px;border-radius:6px;font-weight:600;cursor:pointer">Cancelar</button>
       </div>
     </form>
+  </div>
+</div>
+
+<!-- MODAL MERCADO -->
+<div id="mercado-modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:12px;padding:28px;width:90%;max-width:500px;max-height:90vh;overflow-y:auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+      <h3 id="mm-title" style="font-size:18px;font-weight:700">Novo Mercado</h3>
+      <button onclick="closeMercadoModal()" style="background:none;border:none;font-size:24px;cursor:pointer">×</button>
+    </div>
+    <form id="mercado-form" onsubmit="handleMercadoSubmit(event)" style="display:grid;gap:14px">
+      <div><label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px">Nome</label><input type="text" id="mf-nome" placeholder="Ex: Supermercado X" required style="width:100%;padding:10px;border:1px solid #ddd;border-radius:6px"></div>
+      <div><label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px">Bairro</label><input type="text" id="mf-bairro" placeholder="Ex: Centro" required style="width:100%;padding:10px;border:1px solid #ddd;border-radius:6px"></div>
+      <div><label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px">Endereço</label><input type="text" id="mf-endereco" placeholder="Av. Principal, 123" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:6px"></div>
+      <div><label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px">Telefone</label><input type="tel" id="mf-telefone" placeholder="(92) 98765-4321" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:6px"></div>
+      <div><label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px">Categoria</label>
+        <select id="mf-categoria" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:6px;font-size:14px">
+          <option value="grande">Grande rede</option>
+          <option value="pequeno">Mercadinho / Local</option>
+        </select>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:10px">
+        <button type="submit" style="flex:1;background:#3AA76B;color:#fff;border:none;padding:10px;border-radius:6px;font-weight:600;cursor:pointer">Salvar</button>
+        <button type="button" onclick="closeMercadoModal()" style="flex:1;background:#eee;border:none;padding:10px;border-radius:6px;font-weight:600;cursor:pointer">Cancelar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL VENDEDORES -->
+<div id="vendedor-modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:12px;padding:28px;width:90%;max-width:420px;max-height:90vh;overflow-y:auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+      <h3 style="font-size:18px;font-weight:700">Gerenciar Vendedores</h3>
+      <button onclick="closeVendedorModal()" style="background:none;border:none;font-size:24px;cursor:pointer">×</button>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:16px">
+      <input type="text" id="vf-nome" placeholder="Nome do vendedor" style="flex:1;padding:10px;border:1px solid #ddd;border-radius:6px;font-size:14px">
+      <button onclick="addVendedor()" style="background:#3AA76B;color:#fff;border:none;padding:10px 18px;border-radius:6px;font-weight:600;cursor:pointer;white-space:nowrap">+ Adicionar</button>
+    </div>
+    <div id="vendedor-list" style="display:flex;flex-direction:column;gap:6px"></div>
+    <div style="margin-top:16px;text-align:right">
+      <button onclick="closeVendedorModal()" style="background:#eee;border:none;padding:10px 22px;border-radius:6px;font-weight:600;cursor:pointer">Fechar</button>
+    </div>
   </div>
 </div>
 
@@ -1113,7 +1231,8 @@ function saveOverrides(){
   }
 }
 function merge(){
-  const ALL = [...SEED, ...MERCADOS_SEED];
+  const userMercados = loadMercados().map(m=>({...m, tipo:'mercado'}));
+  const ALL = [...SEED, ...MERCADOS_SEED, ...userMercados, ...PHARMACIES_SEED.map(p=>({...p, tipo:'farmacia', categoria:''}))];
   clients = ALL.map(s=>{ const o = overrides[s.id]||{}; return Object.assign({situacao:'nunca',ultima:'',proxima:'',freq:'',valor:'',resp:'',obs:'',historico:[]}, s, o); });
 }
 
@@ -1518,7 +1637,11 @@ function selectPriceTable(id){
 /* ---------- helpers ---------- */
 const $ = s=>document.querySelector(s);
 const $$ = s=>[...document.querySelectorAll(s)];
-function bairros(){ return [...new Set(SEED.map(c=>c.bairro))]; }
+function bairros(){
+  const userBairros = loadBairros();
+  const seedBairros = SEED.map(c=>c.bairro);
+  return [...new Set([...seedBairros, ...userBairros])].sort();
+}
 function covFor(b){ const list=clients.filter(c=>c.bairro===b); const a=list.filter(c=>c.situacao==='ativo').length; return {total:list.length, ativos:a, pct:list.length?a/list.length:0}; }
 function heatColor(p){ if(p>=.6) return {a:'#2E9E5B',b:'#1B6E42'}; if(p>=.3) return {a:'#E0A82E',b:'#B07E17'}; return {a:'#C0492E',b:'#8F3421'}; }
 function fmtDate(s){ if(!s) return null; const [y,m,d]=s.split('-').map(Number); return {d:d, m:MES[m-1], full:`${String(d).padStart(2,'0')}/${String(m).padStart(2,'0')}`}; }
@@ -1566,6 +1689,7 @@ function renderDash(){
     }).join('');
   }
 
+  renderUltimasVisitas();
   renderDashCanopy();
 }
 function animateRing(pct){
@@ -1737,6 +1861,34 @@ function renderDashCanopy(){
   renderCanopyMap('dash-map', false);
 }
 
+/* ---------- últimas visitas ---------- */
+function renderUltimasVisitas(){
+  const hoje = new Date();
+  const comVisita = clients.filter(c=>c.ultima).sort((a,b)=>a.ultima.localeCompare(b.ultima));
+  const semVisita = clients.filter(c=>!c.ultima && c.situacao!=='nunca');
+  const vl = $('#ultimas-visitas-list');
+  if(!comVisita.length && !semVisita.length){
+    vl.innerHTML = `<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><div>Nenhuma visita registrada ainda.</div></div>`;
+    return;
+  }
+  const difDias = (d) => Math.floor((hoje - new Date(d+'T00:00:00')) / 86400000);
+  const items = [
+    ...comVisita.slice(0,10).map(c=>{
+      const dias = difDias(c.ultima);
+      const s = SIT[c.situacao];
+      return `<div class="visit"><div class="cal" style="${dias>45?'background:#F7DED6':dias>21?'background:#FBEED0':'background:var(--leaf-soft)'}">
+        <span class="d" style="font-size:14px">${dias}d</span></div>
+        <div class="info"><b>${c.nome}</b><span>${c.bairro} · ${s.t} · ${dias>45?'urgente':dias>21?'atenção':'ok'}</span></div></div>`;
+    }),
+    ...semVisita.slice(0,5).map(c=>{
+      const s = SIT[c.situacao];
+      return `<div class="visit"><div class="cal" style="background:#ddd"><span class="d" style="font-size:11px">—</span></div>
+        <div class="info"><b>${c.nome}</b><span>${c.bairro} · ${s.t} · sem visita</span></div></div>`;
+    })
+  ];
+  vl.innerHTML = items.join('');
+}
+
 /* ---------- cobertura tab ---------- */
 function renderCobertura(){
   if(!cobMap){
@@ -1771,13 +1923,15 @@ function renderCobertura(){
 
 /* ---------- clientes ---------- */
 function renderClientes(){
+  initVendedorFilter();
   const q=$('#q').value.trim().toLowerCase();
-  const fb=$('#f-bairro').value, fs=$('#f-sit').value, fsetor=$('#f-setor').value, fcat=$('#f-categoria').value;
+  const fb=$('#f-bairro').value, fs=$('#f-sit').value, fsetor=$('#f-setor').value, fcat=$('#f-categoria').value, fv=$('#f-vendedor').value;
   let list = clients.filter(c=>{
     if(fb && c.bairro!==fb) return false;
     if(fs && c.situacao!==fs) return false;
     if(fsetor && c.tipo!==fsetor) return false;
     if(fcat && c.categoria!==fcat) return false;
+    if(fv && (c.resp||'')!==fv) return false;
     if(q && !(c.nome.toLowerCase().includes(q)||(c.endereco||'').toLowerCase().includes(q))) return false;
     return true;
   });
@@ -1790,11 +1944,11 @@ function renderClientes(){
       <td><span class="badge ${c.tipo==='mercado'?(c.categoria==='grande'?'b-ativo':'b-prospeccao'):'b-nunca'}"><span class="bd"></span>${c.tipo==='mercado'?(c.categoria==='grande'?'Merc. Grande':'Mercadinho'):'Farmácia'}</span></td>
       <td class="tel">${c.telefone||'—'}</td>
       <td><span class="badge ${s.c}"><span class="bd"></span>${s.t}</span></td>
-      <td><span class="badge ${s.c}"><span class="bd"></span>${s.t}</span></td>
+      <td>${c.resp||'<span class="tel">—</span>'}</td>
       <td class="tnum">${d?d.full:'<span class="tel">—</span>'}</td>
       <td style="display:flex;gap:6px;justify-content:center"><button onclick="openPharmacyForm(${c.id})" style="background:#3AA76B;color:#fff;border:none;padding:4px 12px;border-radius:4px;cursor:pointer;font-size:12px;font-weight:600">✏️ Editar</button><button onclick="deletePharmacy(${c.id})" style="background:#d32f2f;color:#fff;border:none;padding:4px 12px;border-radius:4px;cursor:pointer;font-size:12px;font-weight:600">🗑️ Deletar</button></td>
     </tr>`;
-  }).join('') || `<tr><td colspan="6"><div class="empty">Nenhuma drogaria encontrada com esses filtros.</div></td></tr>`;
+  }).join('') || `<tr><td colspan="7"><div class="empty">Nenhuma drogaria encontrada com esses filtros.</div></td></tr>`;
   $$('#cli-body tr[data-id]').forEach(tr=>tr.onclick=()=>openDrawer(+tr.dataset.id));
 }
 
@@ -1827,6 +1981,7 @@ async function saveDrawer(){
   };
   await saveOverrides(); merge();
   closeDrawer(); toast('Registro salvo');
+  initVendedorFilter();
   renderDash(); renderClientes(); renderCobertura();
 }
 function toast(msg){ const t=$('#toast'); $('#toast-t').textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2000); }
@@ -1939,7 +2094,8 @@ const VIEWS={dash:{eye:'Visão geral',t:'Dashboard comercial',s:'Panorama da cob
   historico:{eye:'Carteira',t:'Histórico de vendas',s:'Todas as vendas registradas no CRM, ordenadas da mais recente para a mais antiga.'},
   cobertura:{eye:'Território',t:'Cobertura por bairro',s:'Onde a Amazon Ervas já está forte e onde há espaço para crescer em Manaus.'},
   produtos:{eye:'Catálogo',t:'Produtos',s:'Gerencie o catálogo de produtos Amazon Ervas com preços, fotos e descrições.'},
-  precos:{eye:'Tabelas',t:'Preços',s:'Defina diferentes tabelas de preços com descontos variáveis para cada produto.'}};
+  precos:{eye:'Tabelas',t:'Preços',s:'Defina diferentes tabelas de preços com descontos variáveis para cada produto.'},
+  cadastros:{eye:'Configuração',t:'Cadastros',s:'Gerencie vendedores, bairros, farmácias e mercados cadastrados no sistema.'}};
 function go(v){
   $$('.view').forEach(el=>el.classList.add('hide'));
   $('#view-'+v).classList.remove('hide');
@@ -1949,7 +2105,7 @@ function go(v){
     if(hdr&&hdr.classList.contains('group-hdr'))hdr.classList.toggle('on',body.querySelector('a[data-v].on')!=null);
   });
   const info=VIEWS[v]; $('#tb-eye').textContent=info.eye; $('#tb-title').textContent=info.t; $('#tb-sub').textContent=info.s;
-  if(v==='dash')renderDash(); if(v==='clientes')renderClientes(); if(v==='historico')renderHistoricoView(); if(v==='cobertura')renderCobertura(); if(v==='produtos')renderProducts(); if(v==='precos')renderPrices();
+  if(v==='dash')renderDash(); if(v==='clientes')renderClientes(); if(v==='historico')renderHistoricoView(); if(v==='cobertura')renderCobertura(); if(v==='produtos')renderProducts(); if(v==='precos')renderPrices(); if(v==='cadastros')renderCadastros();
   window.scrollTo(0,0);
 }
 
@@ -1962,6 +2118,73 @@ function initBairroFilter(){
     renderClientes();
   };
   $('#f-categoria').onchange=renderClientes;
+}
+function loadVendedores(){
+  try{ return JSON.parse(localStorage.getItem('amazonervas-vendedores'))||[]; }
+  catch(e){ return []; }
+}
+function saveVendedores(list){
+  localStorage.setItem('amazonervas-vendedores', JSON.stringify(list));
+}
+function getTodosVendedores(){
+  const cadastrados = loadVendedores().map(v=>v.nome);
+  const usados = [...new Set(clients.map(c=>c.resp).filter(Boolean))];
+  return [...new Set([...cadastrados, ...usados])].sort();
+}
+function renderVendedores(){
+  const list=loadVendedores();
+  const container=$('#vendedor-list');
+  if(!list.length){
+    container.innerHTML='<div style="font-size:13px;color:#999;padding:12px 0;text-align:center">Nenhum vendedor cadastrado. Adicione acima.</div>';
+    return;
+  }
+  container.innerHTML=list.map((v,i)=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:#f5f5f5;border-radius:6px">
+    <span style="font-size:14px;font-weight:600">${v.nome}</span>
+    <button onclick="removeVendedor(${i})" style="background:none;border:none;color:#d32f2f;cursor:pointer;font-size:18px;padding:0 4px" title="Remover">×</button>
+  </div>`).join('');
+}
+function openVendedorModal(){
+  renderVendedores();
+  $('#vendedor-modal').style.display='flex';
+  $('#vf-nome').value='';
+  $('#vf-nome').focus();
+  $('#vf-nome').onkeydown=e=>{ if(e.key==='Enter') addVendedor(); };
+}
+function closeVendedorModal(){
+  $('#vendedor-modal').style.display='none';
+}
+function addVendedor(){
+  const nome=$('#vf-nome').value.trim();
+  if(!nome) return toast('Digite o nome do vendedor');
+  const list=loadVendedores();
+  if(list.some(v=>v.nome.toLowerCase()===nome.toLowerCase())) return toast('Vendedor já existe');
+  list.push({nome});
+  saveVendedores(list);
+  renderVendedores();
+  $('#vf-nome').value='';
+  $('#vf-nome').focus();
+  initVendedorFilter();
+  renderClientes();
+  toast('Vendedor adicionado');
+}
+function removeVendedor(idx){
+  const list=loadVendedores();
+  list.splice(idx,1);
+  saveVendedores(list);
+  renderVendedores();
+  initVendedorFilter();
+  renderClientes();
+  toast('Vendedor removido');
+}
+function initVendedorFilter(){
+  const sel=$('#f-vendedor');
+  const vendedores = getTodosVendedores();
+  const atual = sel.value;
+  sel.innerHTML='<option value="">Todos os vendedores</option>'+vendedores.map(v=>`<option value="${v}">${v}</option>`).join('');
+  if(atual && vendedores.includes(atual)) sel.value=atual;
+  const opts = vendedores.map(v=>`<option value="${v}">`).join('');
+  const d1=$('#vl-resp'); if(d1) d1.innerHTML=opts;
+  const d2=$('#vl-phf'); if(d2) d2.innerHTML=opts;
 }
 function showToast(msg){
   const toast=$('#toast'); $('#toast-t').textContent=msg;
@@ -2006,6 +2229,7 @@ function openPharmacyForm(id=null){
       $('#phf-endereco').value=ph.endereco||'';
       $('#phf-telefone').value=ph.telefone||'';
       $('#phf-horario').value=ph.horario||'';
+      $('#phf-resp').value=ph.resp||'';
     }
   }
   $('#pharmacy-modal').style.display='flex';
@@ -2021,16 +2245,17 @@ function handlePharmacySubmit(e){
   const endereco=$('#phf-endereco').value.trim();
   const telefone=$('#phf-telefone').value.trim();
   const horario=$('#phf-horario').value.trim();
+  const resp=$('#phf-resp').value.trim();
   if(!nome||!bairro) return toast('Nome e bairro obrigatórios');
   const pharmacies=loadPharmacies();
   if(editingPharmacyId===null){
     const newId=Math.max(...pharmacies.map(p=>p.id),0)+1;
-    pharmacies.push({id:newId,nome,bairro,endereco,telefone,horario});
+    pharmacies.push({id:newId,nome,bairro,endereco,telefone,horario,resp});
   }else{
     const ph=pharmacies.find(p=>p.id===editingPharmacyId);
     if(ph){
       ph.nome=nome; ph.bairro=bairro; ph.endereco=endereco;
-      ph.telefone=telefone; ph.horario=horario;
+      ph.telefone=telefone; ph.horario=horario; ph.resp=resp;
     }
   }
   savePharmacies(pharmacies);
@@ -2038,7 +2263,7 @@ function handlePharmacySubmit(e){
   PHARMACIES_SEED.push(...pharmacies);
   closePharmacyModal();
   toast('Farmácia salva');
-  renderClientes();
+  merge(); renderClientes(); renderCadastros();
 }
 function deletePharmacy(id){
   if(!confirm('Deletar essa farmácia?')) return;
@@ -2046,14 +2271,197 @@ function deletePharmacy(id){
   savePharmacies(pharmacies);
   PHARMACIES_SEED.length=0;
   PHARMACIES_SEED.push(...pharmacies);
-  renderClientes();
+  merge(); renderClientes(); renderCadastros();
   toast('Farmácia deletada');
 }
 
+/* ---------- MERCADOS (user-added) ---------- */
+let editingMercadoId=null;
+const USER_MERCADOS_SEED=[];
+function loadMercados(){
+  try{ return JSON.parse(localStorage.getItem('amazonervas-mercados'))||[]; }
+  catch(e){ return []; }
+}
+function saveMercados(list){
+  localStorage.setItem('amazonervas-mercados', JSON.stringify(list));
+}
+function openMercadoForm(id=null){
+  editingMercadoId=id;
+  if(id===null){
+    $('#mm-title').textContent='Novo Mercado';
+    $('#mercado-form').reset();
+  }else{
+    const list=loadMercados();
+    const m=list.find(x=>x.id===id);
+    if(m){
+      $('#mm-title').textContent='Editar Mercado';
+      $('#mf-nome').value=m.nome||'';
+      $('#mf-bairro').value=m.bairro||'';
+      $('#mf-endereco').value=m.endereco||'';
+      $('#mf-telefone').value=m.telefone||'';
+      $('#mf-categoria').value=m.categoria||'grande';
+    }
+  }
+  $('#mercado-modal').style.display='flex';
+}
+function closeMercadoModal(){
+  $('#mercado-modal').style.display='none';
+  editingMercadoId=null;
+}
+function handleMercadoSubmit(e){
+  e.preventDefault();
+  const nome=$('#mf-nome').value.trim();
+  const bairro=$('#mf-bairro').value.trim();
+  const endereco=$('#mf-endereco').value.trim();
+  const telefone=$('#mf-telefone').value.trim();
+  const categoria=$('#mf-categoria').value;
+  if(!nome||!bairro) return toast('Nome e bairro obrigatórios');
+  const list=loadMercados();
+  if(editingMercadoId===null){
+    const newId=1000+Math.max(...list.map(m=>m.id),0)+1;
+    list.push({id:newId,nome,bairro,endereco,telefone,categoria});
+  }else{
+    const m=list.find(x=>x.id===editingMercadoId);
+    if(m){ m.nome=nome; m.bairro=bairro; m.endereco=endereco; m.telefone=telefone; m.categoria=categoria; }
+  }
+  saveMercados(list);
+  closeMercadoModal();
+  merge(); renderClientes(); renderCadastros();
+  toast('Mercado salvo');
+}
+function deleteMercado(id){
+  if(!confirm('Deletar esse mercado?')) return;
+  const list=loadMercados().filter(m=>m.id!==id);
+  saveMercados(list);
+  merge(); renderClientes(); renderCadastros();
+  toast('Mercado deletado');
+}
+
+/* ---------- BAIRROS (user-added) ---------- */
+function loadBairros(){
+  try{ return JSON.parse(localStorage.getItem('amazonervas-bairros'))||[]; }
+  catch(e){ return []; }
+}
+function saveBairros(list){
+  localStorage.setItem('amazonervas-bairros', JSON.stringify(list));
+}
+function addCadBairro(){
+  const nome=$('#cad-bairro').value.trim();
+  if(!nome) return toast('Digite o nome do bairro');
+  const list=loadBairros();
+  if(list.some(b=>b.toLowerCase()===nome.toLowerCase())) return toast('Bairro já existe');
+  list.push(nome);
+  saveBairros(list);
+  $('#cad-bairro').value=''; $('#cad-bairro').focus();
+  renderCadastros(); initBairroFilter(); renderClientes();
+  toast('Bairro adicionado');
+}
+function removeCadBairro(idx){
+  const list=loadBairros();
+  if(!confirm(`Remover bairro "${list[idx]}"?`)) return;
+  list.splice(idx,1);
+  saveBairros(list);
+  renderCadastros(); initBairroFilter(); renderClientes();
+  toast('Bairro removido');
+}
+
+/* ---------- CONJUNTOS (user-added) ---------- */
+function loadConjuntos(){
+  try{ return JSON.parse(localStorage.getItem('amazonervas-conjuntos'))||[]; }
+  catch(e){ return []; }
+}
+function saveConjuntos(list){
+  localStorage.setItem('amazonervas-conjuntos', JSON.stringify(list));
+}
+function addCadConjunto(){
+  const nome=$('#cad-conjunto').value.trim();
+  if(!nome) return toast('Digite o nome do conjunto');
+  const list=loadConjuntos();
+  if(list.some(c=>c.toLowerCase()===nome.toLowerCase())) return toast('Conjunto já existe');
+  list.push(nome);
+  saveConjuntos(list);
+  $('#cad-conjunto').value=''; $('#cad-conjunto').focus();
+  renderCadastros();
+  toast('Conjunto adicionado');
+}
+function removeCadConjunto(idx){
+  const list=loadConjuntos();
+  if(!confirm(`Remover conjunto "${list[idx]}"?`)) return;
+  list.splice(idx,1);
+  saveConjuntos(list);
+  renderCadastros();
+  toast('Conjunto removido');
+}
+
+/* ---------- VENDEDORES (cadastros page) ---------- */
+function addCadVendedor(){
+  const nome=$('#cad-vendedor').value.trim();
+  if(!nome) return toast('Digite o nome do vendedor');
+  const list=loadVendedores();
+  if(list.some(v=>v.nome.toLowerCase()===nome.toLowerCase())) return toast('Vendedor já existe');
+  list.push({nome});
+  saveVendedores(list);
+  $('#cad-vendedor').value=''; $('#cad-vendedor').focus();
+  renderCadastros(); initVendedorFilter(); renderClientes();
+  toast('Vendedor adicionado');
+}
+function removeCadVendedor(idx){
+  const list=loadVendedores();
+  if(!confirm(`Remover vendedor "${list[idx].nome}"?`)) return;
+  list.splice(idx,1);
+  saveVendedores(list);
+  renderCadastros(); initVendedorFilter(); renderClientes();
+  toast('Vendedor removido');
+}
+
+/* ---------- renderCadastros ---------- */
+function renderCadastros(){
+  const vendedores=loadVendedores();
+  const vlist=$('#cad-vendedores-list');
+  if(!vendedores.length) vlist.innerHTML='<div style="font-size:13px;color:#999;padding:6px 0">Nenhum vendedor cadastrado.</div>';
+  else vlist.innerHTML=vendedores.map((v,i)=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:#f5f5f5;border-radius:6px;margin-bottom:4px;font-size:13px"><span style="font-weight:600">${v.nome}</span><button onclick="removeCadVendedor(${i})" style="background:none;border:none;color:#d32f2f;cursor:pointer;font-size:16px;padding:0">×</button></div>`).join('');
+
+  const bairros=loadBairros();
+  const blist=$('#cad-bairros-list');
+  if(!bairros.length) blist.innerHTML='<div style="font-size:13px;color:#999;padding:6px 0">Nenhum bairro cadastrado.</div>';
+  else blist.innerHTML=bairros.map((b,i)=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:#f5f5f5;border-radius:6px;margin-bottom:4px;font-size:13px"><span style="font-weight:600">${b}</span><button onclick="removeCadBairro(${i})" style="background:none;border:none;color:#d32f2f;cursor:pointer;font-size:16px;padding:0">×</button></div>`).join('');
+
+  const conjuntos=loadConjuntos();
+  const clist=$('#cad-conjuntos-list');
+  if(!conjuntos.length) clist.innerHTML='<div style="font-size:13px;color:#999;padding:6px 0">Nenhum conjunto cadastrado.</div>';
+  else clist.innerHTML=conjuntos.map((c,i)=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:#f5f5f5;border-radius:6px;margin-bottom:4px;font-size:13px"><span style="font-weight:600">${c}</span><button onclick="removeCadConjunto(${i})" style="background:none;border:none;color:#d32f2f;cursor:pointer;font-size:16px;padding:0">×</button></div>`).join('');
+
+  const farmacias=loadPharmacies();
+  const ftbody=$('#cad-farmacias-body');
+  if(!farmacias.length) ftbody.innerHTML='<tr><td colspan="6"><div class="empty">Nenhuma farmácia cadastrada.</div></td></tr>';
+  else ftbody.innerHTML=farmacias.map(f=>`<tr>
+    <td><span class="cli-name">${f.nome}</span></td>
+    <td>${f.bairro}</td>
+    <td class="tel">${f.endereco||'—'}</td>
+    <td class="tel">${f.telefone||'—'}</td>
+    <td>${f.resp||'—'}</td>
+    <td style="white-space:nowrap"><button onclick="openPharmacyForm(${f.id})" style="background:#3AA76B;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:11px;font-weight:600">✏️</button><button onclick="deletePharmacy(${f.id})" style="background:#d32f2f;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:11px;font-weight:600;margin-left:4px">🗑️</button></td>
+  </tr>`).join('');
+
+  const mercados=loadMercados();
+  const mtbody=$('#cad-mercados-body');
+  if(!mercados.length) mtbody.innerHTML='<tr><td colspan="5"><div class="empty">Nenhum mercado cadastrado.</div></td></tr>';
+  else mtbody.innerHTML=mercados.map(m=>`<tr>
+    <td><span class="cli-name">${m.nome}</span></td>
+    <td>${m.bairro}</td>
+    <td class="tel">${m.endereco||'—'}</td>
+    <td><span class="badge ${m.categoria==='grande'?'b-ativo':'b-prospeccao'}"><span class="bd"></span>${m.categoria==='grande'?'Grande rede':'Mercadinho'}</span></td>
+    <td style="white-space:nowrap"><button onclick="openMercadoForm(${m.id})" style="background:#3AA76B;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:11px;font-weight:600">✏️</button><button onclick="deleteMercado(${m.id})" style="background:#d32f2f;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:11px;font-weight:600;margin-left:4px">🗑️</button></td>
+  </tr>`).join('');
+}
+
 async function init(){
-  await loadOverrides(); merge(); loadProducts(); loadPriceTables(); const ph=loadPharmacies(); PHARMACIES_SEED.length=0; PHARMACIES_SEED.push(...ph); initBairroFilter();
+  await loadOverrides(); merge(); loadProducts(); loadPriceTables(); const ph=loadPharmacies(); PHARMACIES_SEED.length=0; PHARMACIES_SEED.push(...ph); initBairroFilter(); initVendedorFilter();
+  $('#cad-vendedor').onkeydown=e=>{ if(e.key==='Enter') addCadVendedor(); };
+  $('#cad-bairro').onkeydown=e=>{ if(e.key==='Enter') addCadBairro(); };
+  $('#cad-conjunto').onkeydown=e=>{ if(e.key==='Enter') addCadConjunto(); };
   $$('#nav a[data-v], #mnav a').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();showSidebar();go(a.dataset.v);}));
-  $('#q').oninput=renderClientes; $('#f-bairro').onchange=renderClientes; $('#f-sit').onchange=renderClientes;
+  $('#q').oninput=renderClientes; $('#f-bairro').onchange=renderClientes; $('#f-vendedor').onchange=renderClientes; $('#f-sit').onchange=renderClientes;
   if($('#product-search')) $('#product-search').oninput=renderProducts;
   if($('#product-cat')) $('#product-cat').onchange=renderProducts;
   $('#dr-close').onclick=closeDrawer; $('#dr-cancel').onclick=closeDrawer; $('#scrim').onclick=closeDrawer; $('#dr-save').onclick=saveDrawer;
